@@ -21,7 +21,7 @@
     </HomeSectionFade>
 
     <HomeSectionFade>
-      <HomeCtaSection @quote-click="onHeroQuoteSearch" />
+      <HomeCtaSection @quote-click="onContactClick" />
     </HomeSectionFade>
 
     <HomeSectionFade>
@@ -35,6 +35,7 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import CompanyIntro from '@/components/home/CompanyIntro.vue'
 import HomeCtaSection from '@/components/home/HomeCtaSection.vue'
 import HomeBusinessDetailsSection from '@/components/home/HomeBusinessDetailsSection.vue'
@@ -46,7 +47,13 @@ import HomeSectionFade from '@/components/home/HomeSectionFade.vue'
 import HomeWhySection from '@/components/home/HomeWhySection.vue'
 import './home-page.css'
 
-function onHeroQuoteSearch() {
-  /* TODO: 跳转店铺装修报价等 */
+const router = useRouter()
+
+function onHeroQuoteSearch(targetRoute: string) {
+  router.push(targetRoute)
+}
+
+function onContactClick() {
+  router.push('/contact')
 }
 </script>

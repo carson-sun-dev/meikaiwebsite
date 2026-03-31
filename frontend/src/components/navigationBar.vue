@@ -1,12 +1,19 @@
 <template>
-  <header class="nav-bar" :style="{ background: navBackground }">
+  <header
+    class="nav-bar"
+    :class="{
+      'nav-bar--contrast-normal': isHomeRoute && contrastMode === 'normal',
+      'nav-bar--contrast-high': isHomeRoute && contrastMode === 'high',
+    }"
+    :style="{ background: navBackground }"
+  >
     <nav class="nav-bar__wrap" aria-label="主导航">
       <!-- Frame：导航链接 -->
       <div class="nav-bar__links">
-        <router-link class="nav-bar__link nav-bar__link--underline" to="/">网站首页</router-link>
-        <router-link class="nav-bar__link nav-bar__link--underline" to="/store">品牌店装</router-link>
-        <span class="nav-bar__muted">商务·办公</span>
-        <span class="nav-bar__muted">精品家装</span>
+        <router-link class="nav-bar__link" to="/">网站首页</router-link>
+        <router-link class="nav-bar__link" to="/store">品牌店装</router-link>
+        <router-link class="nav-bar__link" to="/business">商务·办公</router-link>
+        <router-link class="nav-bar__link" to="/residential">精品家装</router-link>
       </div>
 
       <!-- Frame1：Logo -->
@@ -21,8 +28,8 @@
       <div class="nav-bar__cta">
         <router-link class="nav-bar__contact" to="/about">关于美恺</router-link>
         <router-link class="nav-bar__estimate" to="/contact">
-          <ChatPlusLight class="nav-bar__estimate-icon" />
-          <span>一键估价</span>
+          <PaperPlaneIcon class="nav-bar__estimate-icon" />
+          <span class="nav-bar__estimate-text">一键估价</span>
         </router-link>
       </div>
 
@@ -35,17 +42,27 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
-import ChatPlusLight from '@/components/icons/ChatPlusLight.vue'
+import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon.vue'
 
-import logoImg from '@source/logo/logo.png'
-import ziImg from '@source/logo/zi.png'
+import logoImg from '@/source/logo/logo.png'
+import ziImg from '@/source/logo/zi.png'
 
 const route = useRoute()
+const props = withDefaults(
+  defineProps<{
+    contrastMode?: 'normal' | 'high'
+  }>(),
+  {
+    contrastMode: 'normal',
+  },
+)
+const isHomeRoute = computed(() => route.path === '/' || route.path === '/home')
+const contrastMode = computed(() => props.contrastMode)
 
 const navBackground = computed(() => {
   // 首页 / 关于我们需要透明融入 Hero；联系页及其他页面保持黑色。
   // 当前路由：`/` 会重定向到 `/home`，但这里同时兼容。
-  return route.path === '/' || route.path === '/home' || route.path === '/about' ? 'transparent' : '#000'
+  return isHomeRoute.value || route.path === '/about' ? 'transparent' : '#000'
 })
 
 function onToggleLocale() {
@@ -55,12 +72,23 @@ function onToggleLocale() {
 
 <style scoped>
 .nav-bar {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 50;
-  width: 100%;
+  width: min(96%, 1280px);
   flex-shrink: 0;
   background: transparent;
-  padding: 14px 0;
+  padding: 8px 0 11px;
+  border-radius: 0 0 20px 20px;
+  margin: 0 auto;
+}
+
+.nav-bar--contrast-normal {
+  background: rgb(8 8 8 / 0.12);
+}
+
+.nav-bar--contrast-high {
+  background: rgb(8 8 8 / 0.28);
 }
 
 .nav-bar__wrap {
@@ -68,27 +96,39 @@ function onToggleLocale() {
   max-width: 1080px;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: 40px 51px;
+  justify-content: space-between;
+  gap: 18px;
   margin-left: auto;
   margin-right: auto;
+  padding: 0 8px;
+  box-sizing: border-box;
 }
 
 .nav-bar__links {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 14px;
   font-family:
     'Manrope',
     'Noto Sans JP',
     system-ui,
     sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   line-height: 1.2;
   color: #fff;
   letter-spacing: -0.14px;
   white-space: nowrap;
+}
+
+.nav-bar--contrast-high .nav-bar__links,
+.nav-bar--contrast-high .nav-bar__contact,
+.nav-bar--contrast-high .nav-bar__lang {
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.75);
+}
+
+.nav-bar--contrast-high .nav-bar__contact::after {
+  border-color: rgb(255 255 255 / 0.92);
 }
 
 .nav-bar__link {
@@ -108,29 +148,31 @@ function onToggleLocale() {
 
 .nav-bar__brand {
   flex-shrink: 0;
+  transform: translateX(28px);
 }
 
 .nav-bar__logo-link {
+  position: relative;
   display: flex;
-  height: 74px;
-  width: 262px;
+  height: 64px;
+  width: 228px;
   align-items: center;
-  padding-left: 10px;
+  padding-left: 8px;
   box-sizing: border-box;
   text-decoration: none;
 }
 
 .nav-bar__logo-mark {
-  width: 80px;
-  height: 74px;
+  width: 68px;
+  height: 64px;
   flex-shrink: 0;
   object-fit: contain;
   pointer-events: none;
 }
 
 .nav-bar__logo-word {
-  width: 150px;
-  height: 74px;
+  width: 132px;
+  height: 64px;
   flex-shrink: 0;
   object-fit: contain;
   pointer-events: none;
@@ -138,11 +180,11 @@ function onToggleLocale() {
 
 .nav-bar__cta {
   display: flex;
-  width: 290px;
+  width: 244px;
   flex-shrink: 0;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 16px;
 }
 
 .nav-bar__contact {
@@ -150,7 +192,7 @@ function onToggleLocale() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 20px;
+  padding: 8px 16px;
   border-radius: 20px;
   font-family:
     'Manrope',
@@ -178,13 +220,13 @@ function onToggleLocale() {
 
 .nav-bar__estimate {
   display: inline-flex;
-  height: 36px;
-  width: 105px;
+  height: 34px;
+  width: 112px;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 10px 20px 10px 15px;
+  gap: 6px;
+  padding: 8px 14px;
   box-sizing: border-box;
   border-radius: 32px;
   background: #ff5449;
@@ -194,7 +236,7 @@ function onToggleLocale() {
     'Noto Sans SC',
     system-ui,
     sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   font-style: normal;
   line-height: normal;
@@ -206,9 +248,16 @@ function onToggleLocale() {
 .nav-bar__estimate-icon {
   display: block;
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  position: relative;
+  width: 14px;
+  height: 14px;
+  color: #fff;
+  transform: translateY(0.5px);
+}
+
+.nav-bar__estimate-text {
+  display: block;
+  line-height: 1;
+  transform: translateY(0.5px);
 }
 
 .nav-bar__estimate:hover {
@@ -238,6 +287,10 @@ function onToggleLocale() {
 }
 
 @media (max-width: 900px) {
+  .nav-bar {
+    width: 100%;
+  }
+
   .nav-bar__wrap {
     flex-direction: column;
     gap: 24px;

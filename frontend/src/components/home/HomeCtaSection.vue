@@ -10,7 +10,7 @@
           <h2 class="home-date-cta__title">请让我们了解您的需求：</h2>
           <h3 class="home-date-cta__subtitle">2026 工程排期已开启，先到先得！</h3>
           <button type="button" class="home-date-cta__action" @click="onQuoteClick">
-            <ChatPlusLight class="home-date-cta__icon" />
+            <PaperPlaneIcon class="home-date-cta__icon" />
             <span class="home-date-cta__action-label">一键估价</span>
           </button>
         </div>
@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import ChatPlusLight from '@/components/icons/ChatPlusLight.vue'
+import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon.vue'
 import bgImg from '@/source/homepage/4/1.jpg'
 
 const emit = defineEmits<{
@@ -46,7 +46,7 @@ function onQuoteClick() {
   position: relative;
   overflow: hidden;
   max-width: 67.5rem;
-  min-height: 35rem;
+  min-height: 38.5rem;
   margin-left: auto;
   margin-right: auto;
   border-radius: 20px;
@@ -147,8 +147,10 @@ function onQuoteClick() {
 
 .home-date-cta__icon {
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 14px;
+  height: 14px;
+  color: #fff;
+  transform: translateY(0.5px);
 }
 
 .home-date-cta__action-label {

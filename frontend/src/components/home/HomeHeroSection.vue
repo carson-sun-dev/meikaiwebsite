@@ -15,7 +15,7 @@
     <div class="hero-overlay" />
 
     <div class="hero-shell">
-      <NavigationBar />
+      <NavigationBar :contrast-mode="activeNavContrastMode" />
 
       <h1 class="hero-frame6">
         <div class="hero-frame5">
@@ -32,52 +32,102 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import NavigationBar from '@/components/navigationBar.vue'
+import imgBusiness1 from '@/source/homepage/1/bussiness1.jpg'
+import imgBusiness3 from '@/source/homepage/1/bussiness3.jpg'
+import imgHome1 from '@/source/homepage/1/home1.jpg'
+import imgHome2 from '@/source/homepage/1/home2.jpg'
 import imgStore1 from '@/source/homepage/1/store1.jpg'
 import imgStore2 from '@/source/homepage/1/store2.jpg'
+import imgStore3 from '@/source/homepage/1/store3.jpg'
 
 import HeroQuoteSearchPill from './HeroQuoteSearchPill.vue'
 
-/** 背景与玻璃条文案同一时刻切换（同一 interval tick） */
+/** 背景与玻璃条文案同一时刻切换（同一 tick） */
 const HERO_CAROUSEL_INTERVAL_MS = 5500
 
 const emit = defineEmits<{
-  quoteSearch: []
+  quoteSearch: [targetRoute: string]
 }>()
 
-const heroImages = [imgStore1, imgStore2] as const
+type HeroSlide = {
+  image: string
+  message: string
+  navContrast: 'normal' | 'high'
+  route: '/store' | '/business' | '/residential'
+}
 
-/** 占位文案，后续可抽成常量或 props */
-const pillMessages = [
-  '我的店铺装修报价是？',
-  '办公室翻新·免费出方案',
-  '金水区门店·预约量房设计',
+/**
+ * 固定播放顺序：
+ * 店铺 -> 商务 -> 家装，然后继续循环
+ */
+const slides: readonly HeroSlide[] = [
+  { image: imgStore1, message: '店铺改造不歇业，施工能否分阶段？', navContrast: 'high', route: '/store' },
+  { image: imgBusiness1, message: '商务办公翻新，如何高效落地？', navContrast: 'normal', route: '/business' },
+  { image: imgHome1, message: '家装设计施工，多久可以入住？', navContrast: 'high', route: '/residential' },
+  { image: imgStore2, message: '店铺装饰风格怎么做更吸引顾客？', navContrast: 'high', route: '/store' },
+  { image: imgBusiness3, message: '办公空间升级，预算如何分配更合理？', navContrast: 'normal', route: '/business' },
+  { image: imgHome2, message: '家装风格落地，怎样兼顾颜值与实用？', navContrast: 'high', route: '/residential' },
+  { image: imgStore3, message: '我的店铺工程需要预算大概多少？', navContrast: 'high', route: '/store' },
 ] as const
 
-/** 每次 tick 同时推进：用于背景与文案 */
-const step = ref(0)
+const heroImages = computed(() => slides.map((slide) => slide.image))
+const pillMessages = computed(() => slides.map((slide) => slide.message))
 
-const activeImageIndex = computed(() => step.value % heroImages.length)
-const activeMessageIndex = computed(() => step.value % pillMessages.length)
+const activeIndex = ref(0)
+const activeImageIndex = computed(() => activeIndex.value)
+const activeMessageIndex = computed(() => activeIndex.value)
+const activeNavContrastMode = computed(() => slides[activeIndex.value]?.navContrast ?? 'normal')
 
 let intervalId: ReturnType<typeof setInterval> | undefined
+
+function advanceSlide() {
+  activeIndex.value = (activeIndex.value + 1) % slides.length
+}
+
+function startAutoPlay() {
+  if (intervalId !== undefined || slides.length <= 1) {
+    return
+  }
+  intervalId = setInterval(advanceSlide, HERO_CAROUSEL_INTERVAL_MS)
+}
+
+function stopAutoPlay() {
+  if (intervalId !== undefined) {
+    clearInterval(intervalId)
+    intervalId = undefined
+  }
+}
+
+function onVisibilityChange() {
+  if (typeof document === 'undefined') {
+    return
+  }
+  if (document.hidden) {
+    stopAutoPlay()
+    return
+  }
+  startAutoPlay()
+}
 
 onMounted(() => {
   if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     return
   }
-  intervalId = setInterval(() => {
-    step.value += 1
-  }, HERO_CAROUSEL_INTERVAL_MS)
+  startAutoPlay()
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', onVisibilityChange)
+  }
 })
 
 onUnmounted(() => {
-  if (intervalId !== undefined) {
-    clearInterval(intervalId)
+  stopAutoPlay()
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('visibilitychange', onVisibilityChange)
   }
 })
 
 function onQuoteSearchClick() {
-  emit('quoteSearch')
+  emit('quoteSearch', slides[activeIndex.value]?.route ?? '/store')
 }
 </script>
 
@@ -155,6 +205,8 @@ function onQuoteSearchClick() {
 .hero-title-display {
   font-family:
     'Noto Sans SC',
+    'Alibaba PuHuiTi',
+    'Source Han Sans SC',
     'PingFang SC',
     'Hiragino Sans GB',
     'Microsoft YaHei',
@@ -162,13 +214,13 @@ function onQuoteSearchClick() {
   font-size: clamp(2.5rem, 7.5vw + 1rem, 5.5rem);
   font-weight: 900;
   font-style: normal;
-  line-height: 1.08;
-  letter-spacing: 0.02em;
-  color: rgba(255, 255, 255, 0.96);
+  line-height: 1.06;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.88);
   -webkit-font-smoothing: antialiased;
   text-shadow:
-    0 2px 28px rgb(0 0 0 / 0.5),
-    0 1px 3px rgb(0 0 0 / 0.4);
+    0 3px 34px rgb(0 0 0 / 0.58),
+    0 1px 4px rgb(0 0 0 / 0.45);
 }
 
 .hero-frame6 {
@@ -193,6 +245,8 @@ function onQuoteSearchClick() {
 .hero-title-first {
   flex: 1 1 0;
   min-width: 0;
+  font-size: clamp(2.9rem, 8.4vw + 1rem, 6.2rem);
+  transform: skewX(-5deg);
 }
 
 .hero-title-second {
@@ -201,6 +255,7 @@ function onQuoteSearchClick() {
   max-width: 940px;
   margin: 0;
   text-align: center;
+  transform: skewX(-5deg);
 }
 
 @media (max-width: 900px) {

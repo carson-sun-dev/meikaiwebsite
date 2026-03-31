@@ -27,17 +27,17 @@
             <router-link class="home-footer__link" to="/store">
               品牌店装
             </router-link>
-            <span class="home-footer__muted">商务·办公</span>
-            <span class="home-footer__muted">精品家装</span>
+            <router-link class="home-footer__link" to="/business">商务·办公</router-link>
+            <router-link class="home-footer__link" to="/residential">精品家装</router-link>
           </nav>
           <address class="home-footer__address">
             <div class="home-footer__addr-line">
-              <el-icon><Location /></el-icon>
-              <span>河南省郑州市 · 示例地址 88 号</span>
+              <el-icon><Phone /></el-icon>
+              <span>13393736352</span>
             </div>
             <div class="home-footer__addr-line">
-              <el-icon><Phone /></el-icon>
-              <span>400-000-0000</span>
+              <el-icon><Location /></el-icon>
+              <span>河南省郑州市管城回族区南台路9号</span>
             </div>
           </address>
         </div>
@@ -74,8 +74,8 @@
 import { Location, Phone } from '@element-plus/icons-vue'
 
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon.vue'
-import logoImg from '@source/logo/logo.png'
-import ziImg from '@source/logo/zi.png'
+import logoImg from '@/source/logo/logo.png'
+import ziImg from '@/source/logo/zi.png'
 </script>
 
 <style scoped>
@@ -255,12 +255,6 @@ import ziImg from '@source/logo/zi.png'
 
 .home-footer__link:hover {
   opacity: 0.92;
-}
-
-.home-footer__muted {
-  cursor: default;
-  color: rgba(255, 255, 255, 0.72);
-  white-space: nowrap;
 }
 
 .home-footer__address {

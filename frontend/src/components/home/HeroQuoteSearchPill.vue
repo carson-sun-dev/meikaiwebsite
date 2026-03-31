@@ -42,11 +42,13 @@ const currentText = computed(() => {
   isolation: isolate;
   display: flex;
   box-sizing: border-box;
-  width: 234px;
-  height: 34px;
+  width: fit-content;
+  min-width: 260px;
+  max-width: min(92vw, 34ch);
+  height: 37px;
   align-items: center;
   gap: 6px;
-  padding: 2px 6px 2px 6px;
+  padding: 2px 9px;
   border-radius: 15px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.04);
@@ -99,8 +101,8 @@ const currentText = computed(() => {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 23px;
+  height: 23px;
   padding: 0;
   border: none;
   border-radius: 20px;
@@ -131,7 +133,7 @@ const currentText = computed(() => {
 .quote-pill__divider {
   flex-shrink: 0;
   width: 1px;
-  height: 20px;
+  height: 22px;
   margin-left: 3px;
   align-self: center;
   border-radius: 1px;
@@ -211,8 +213,8 @@ const currentText = computed(() => {
 
 @media (max-width: 640px) {
   .quote-pill {
-    width: 100%;
-    max-width: 234px;
+    min-width: 0;
+    max-width: min(94vw, 28ch);
   }
 
   .quote-pill__text {

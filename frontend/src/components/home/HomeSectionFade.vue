@@ -77,10 +77,10 @@ onUnmounted(() => {
 <style scoped>
 .home-section-fade {
   opacity: 0;
-  transform: translateY(1.25rem);
+  transform: translateY(2rem);
   transition:
-    opacity 0.75s cubic-bezier(0.33, 1, 0.68, 1),
-    transform 0.75s cubic-bezier(0.33, 1, 0.68, 1);
+    opacity 1s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 1s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
 }
 

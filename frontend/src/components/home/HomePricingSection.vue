@@ -12,7 +12,9 @@
               <span>{{ line }}</span>
             </li>
           </ul>
-          <el-button round class="home-price-card__btn">了解详情</el-button>
+          <router-link v-if="props.showDetailButton" :to="getPlanDetailRoute(plan.title)" class="home-price-card__btn">
+            了解详情
+          </router-link>
         </div>
       </div>
 
@@ -33,13 +35,22 @@ const props = withDefaults(
   defineProps<{
     /** 传入则覆盖默认首页套餐数据 */
     plans?: HomePricingPlan[]
+    /** 是否显示卡片底部了解详情按钮 */
+    showDetailButton?: boolean
   }>(),
   {
     plans: undefined,
+    showDetailButton: true,
   },
 )
 
 const plans = computed(() => props.plans ?? homePricingPlans)
+
+function getPlanDetailRoute(title: string) {
+  if (title.includes('店')) return '/store'
+  if (title.includes('商务') || title.includes('办公')) return '/business'
+  return '/residential'
+}
 </script>
 
 <style scoped>
@@ -141,10 +152,13 @@ const plans = computed(() => props.plans ?? homePricingPlans)
 
 .home-price-card__btn {
   margin-top: 2rem;
-}
-
-.home-price-card__btn.el-button {
-  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 8px 16px;
+  border-radius: 999px;
+  text-decoration: none;
   background: #171717;
   color: #fff;
 }

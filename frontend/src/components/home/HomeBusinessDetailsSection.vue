@@ -4,19 +4,21 @@
       <h2 class="home-business__label">业务细节</h2>
       <div class="home-business__body">
         <p class="home-business__para">
-          我们专注于<span class="home-business__accent">精品店铺</span>装修，至今已成功交付超过
+          我们专注于<router-link to="/store" class="home-business__accent">品牌店铺</router-link>装修，至今已成功交付
           <span class="home-business__metric">120+</span>
-          个项目
+          。从网红餐饮、品牌零售到高端会所，
+          我们将每一平米都转化为商业价值，助力店主实现从“开业”到“爆火”的跨越。
         </p>
         <p class="home-business__para">
-          同时致力于为企业提供<span class="home-business__accent">办公装修</span>解决方案，已完成
+          我们为企业提供<router-link to="/business" class="home-business__accent">商务·办公</router-link>解决方案，已完成
           <span class="home-business__metric">30+</span>
-          处高标准商务办公项目。
+          高标准商务办公项目。为您的团队构筑激发灵感的创意引擎，让办公空间成为彰显企业实力与格局的窗口。
         </p>
         <p class="home-business__para">
-          美恺从<span class="home-business__accent">家装</span>起家，我们始终将客户置于首位，为
+          美恺从<router-link to="/residential" class="home-business__accent">精品家装</router-link>起家，已为
           <span class="home-business__metric">200+</span>
-          个家庭定制了梦想之家。
+          个家庭定制了梦想之家。我们始终对家装保持着最深沉的敬畏。
+          从零散的图纸到温暖的实景,我们坚持将客户需求置于首位。
         </p>
       </div>
     </div>
@@ -65,7 +67,7 @@
 .home-business__label {
   margin: 0;
   font-family: 'EB Garamond', 'Noto Sans SC', serif;
-  font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: 400;
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -75,29 +77,40 @@
 .home-business__body {
   display: flex;
   flex-direction: column;
-  gap: 2.75rem;
+  gap: 3.2rem;
   width: 100%;
 }
 
 @media (min-width: 768px) {
   .home-business__body {
-    gap: 3.25rem;
+    gap: 3.8rem;
   }
+
 }
 
 .home-business__para {
   margin: 0;
   font-family: 'EB Garamond', 'Noto Sans SC', serif;
-  font-size: clamp(1.25rem, 3.2vw, 3rem);
+  font-size: clamp(1.08rem, 2.4vw, 2.35rem);
   font-weight: 400;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  line-height: 1.4;
+  letter-spacing: 0.005em;
   color: #000;
+  text-align: justify;
+  text-justify: inter-ideograph;
 }
 
 .home-business__accent {
+  display: inline;
   font-style: normal;
-  color: #2977ed;
+  color: #ff5449;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.home-business__accent:hover {
+  opacity: 0.85;
 }
 
 .home-business__metric {

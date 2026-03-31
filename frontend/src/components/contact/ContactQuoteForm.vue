@@ -419,9 +419,8 @@
         <p v-if="errorText" class="contact-quote__msg contact-quote__msg--error">{{ errorText }}</p>
       </form>
 
-      <!-- 表单下方：参考单价（装修单价） -->
       <div class="contact-quote__unitref">
-        <ContactUnitPriceReference :plans="unitPricePlans" :active-key="selectedPlan" />
+        <HomePricingSection :show-detail-button="false" />
       </div>
 
       <div v-if="showSuccessModal" class="contact-quote__modal" role="dialog" aria-modal="true" aria-label="提交成功弹窗">
@@ -441,7 +440,7 @@
 import { computed, ref } from 'vue'
 
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon.vue'
-import ContactUnitPriceReference, { type ContactUnitRefPlan } from './ContactUnitPriceReference.vue'
+import HomePricingSection from '@/components/home/HomePricingSection.vue'
 
 export type ContactQuoteGender = 'ms' | 'mr'
 
@@ -547,27 +546,6 @@ const planList = computed(() => [
   {
     key: 'residential' as const,
     title: '精品家装',
-  },
-])
-
-const unitPricePlans = computed<ContactUnitRefPlan[]>(() => [
-  {
-    key: 'store',
-    title: '品牌店装',
-    unitPrice: 20,
-    bullets: ['预算规划与空间落地建议', '关键工艺与材料清单梳理', '后续交付与验收重点提醒'],
-  },
-  {
-    key: 'business',
-    title: '商务·办公',
-    unitPrice: 60,
-    bullets: ['功能分区与动线优化建议', '弱电/空调对接方案要点', '施工进度与验收流程提醒'],
-  },
-  {
-    key: 'residential',
-    title: '精品家装',
-    unitPrice: 120,
-    bullets: ['房型结构与重点区域方案要点', '材料与细节做法建议', '交付时间与质保事项说明'],
   },
 ])
 
@@ -934,6 +912,11 @@ function onSubmit() {
 
 .contact-quote__unitref {
   margin-top: 2rem;
+}
+
+:deep(.contact-quote__unitref .home-pricing) {
+  padding-top: 0.25rem;
+  padding-bottom: 0;
 }
 
 .contact-quote__submit {

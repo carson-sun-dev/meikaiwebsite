@@ -5,7 +5,7 @@
         <h2 class="home-gallery__section-label">装修案例</h2>
         <div class="home-gallery__intro">
           <h3 class="home-gallery__display-title">体验我们的成果</h3>
-          <a href="#" class="home-gallery__contact-link">立刻联系</a>
+          <router-link to="/contact" class="home-gallery__contact-link">立刻联系</router-link>
         </div>
       </div>
     </div>

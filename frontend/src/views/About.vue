@@ -20,6 +20,31 @@
       </HomeSectionFade>
 
       <HomeSectionFade>
+        <section class="about-metrics" aria-label="品牌关键数据">
+          <div class="about-wrap">
+            <div class="about-metrics__grid">
+              <article class="about-metric">
+                <div class="about-metric__value">7年+</div>
+                <div class="about-metric__label">河南本地深耕经验</div>
+              </article>
+              <article class="about-metric">
+                <div class="about-metric__value">380+</div>
+                <div class="about-metric__label">累计项目交付</div>
+              </article>
+              <article class="about-metric">
+                <div class="about-metric__value">60+</div>
+                <div class="about-metric__label">服务企业客户</div>
+              </article>
+              <article class="about-metric">
+                <div class="about-metric__value">20年</div>
+                <div class="about-metric__label">总工程师实战经验</div>
+              </article>
+            </div>
+          </div>
+        </section>
+      </HomeSectionFade>
+
+      <HomeSectionFade>
         <section class="about-intro" aria-label="关于美恺装饰">
           <div class="about-wrap">
             <div class="about-intro__grid">
@@ -28,19 +53,26 @@
               <div class="about-intro__main">
                 <div class="about-intro__block">
                   <div class="about-intro__h">深耕中原七载，匠心筑造品质标杆</div>
-                  <div class="about-intro__p">
-                    河南美恺装饰有限公司始创于 2017年 ，是一家集门面房店铺、商务办公楼及精品家庭装饰为一体的综合性装饰企业 。公司业务以郑州为核心，深度覆盖洛阳、开封、驻马店等河南各大城市 。在七年的品牌发展进程中，我们始终不惧行业风雨 ，坚持以客户的装饰意见为核心导向 ，凭借卓越的施工速度与交付质量，在河南装饰市场赢得了广泛的企业好评与深厚的口碑认证 。
-                  </div>
+                  <ul class="about-intro__list">
+                    <li>始于 2017 年，聚焦店铺、商务办公、精品家装三大场景。</li>
+                    <li>以郑州为核心，服务覆盖洛阳、开封、驻马店等河南多地。</li>
+                    <li>坚持“方案可落地、工艺可验证、交付可追踪”的项目管理标准。</li>
+                  </ul>
                 </div>
 
                 <div class="about-intro__block">
                   <div class="about-intro__h">二十年工程积淀，全球直供正品保障</div>
-                  <div class="about-intro__p">
-                    美恺装饰的核心竞争力源于专业的团队管理，公司总工程师拥有超过 <span class="about-intro__em">20</span> 年的资深装修经验，坚持实施一对一深度对接服务，确保每一项全包工程都能精准落地 。在用料方面，我们严守“大牌用料，全球选材”的准则 ，与立邦、多乐士、三棵树、诺贝尔瓷砖、公牛及老板等全球知名品牌建立深度合作 ，确保所有建材均为正品且环保达标 。我们郑重承诺，以行业领先的技术标准与质保服务 ，为每一位客户铸就非凡的商业与居住空间 。
-                  </div>
+                  <ul class="about-intro__list">
+                    <li>总工程师团队具备 <span class="about-intro__em">20</span> 年以上施工与管理经验。</li>
+                    <li>采用一对一深度对接机制，确保关键节点沟通透明。</li>
+                    <li>与立邦、多乐士、三棵树、诺贝尔、公牛、老板等品牌合作，保障正品与环保标准。</li>
+                  </ul>
                 </div>
 
-                <router-link class="about-intro__link" to="/contact">点击联系我们</router-link>
+                <div class="about-intro__cta">
+                  <router-link class="about-intro__btn about-intro__btn--primary" to="/contact">30秒获取装修报价</router-link>
+                  <router-link class="about-intro__btn about-intro__btn--ghost" to="/store">查看品牌店装案例</router-link>
+                </div>
               </div>
             </div>
           </div>
@@ -50,44 +82,65 @@
       <HomeSectionFade>
         <section class="about-milestones" aria-label="企业历程与口碑">
           <div class="about-wrap">
-            <div class="about-milestones__stack">
-              <div class="milestone milestone--right">
-                <div class="milestone__media">
-                  <img :src="m1" alt="" class="milestone__img" />
-                </div>
-                <div class="milestone__glass">
-                  <div class="milestone__title">七年之旅</div>
-                  <div class="milestone__sub">2017-2026</div>
-                  <div class="milestone__text">
-                    河南美恺装饰有限公司创办于2017年，至今已有7年，七年过程中我们不惧风雨，始终以客户的装饰意见为第一位，秉持以匠心，铸非凡的信念，已成长为具备门面房店铺、商务办公楼、家庭装饰多样业务为一体的综合公司。
-                  </div>
-                </div>
-              </div>
+            <div class="about-milestones__head">
+              <p class="about-milestones__kicker">MEIKAI TIMELINE</p>
+              <h2 class="about-milestones__title">从创立到规模化交付的三次跨越</h2>
+            </div>
 
-              <div class="milestone milestone--left">
-                <div class="milestone__media">
-                  <img :src="m2" alt="" class="milestone__img" />
+            <div class="about-timeline">
+              <article class="timeline-item">
+                <div class="timeline-item__track" aria-hidden="true">
+                  <span class="timeline-item__dot" />
                 </div>
-                <div class="milestone__glass milestone__glass--alt">
-                  <div class="milestone__title">口碑认证</div>
-                  <div class="milestone__text">
-                    河南美恺装饰有限公司至今已服务大小企业60+，是河南知名餐饮企业福状元的坚实装饰合作伙伴。业务郑州为核心遍及河南各大城市，如洛阳、开封、驻马店、新郑。施工速度以及质量广受企业好评。
+                <div class="timeline-item__period">2017 - 2020</div>
+                <div class="timeline-item__card">
+                  <div class="timeline-item__content">
+                    <h3 class="timeline-item__title">品牌创立与标准搭建</h3>
+                    <p class="timeline-item__text">
+                      公司创立后快速建立设计、施工、交付协同机制，形成覆盖店铺、商务办公与家庭装饰的标准化服务流程。
+                    </p>
+                  </div>
+                  <div class="timeline-item__media">
+                    <img :src="m1" alt="" class="timeline-item__img" />
                   </div>
                 </div>
-              </div>
+              </article>
 
-              <div class="milestone milestone--right">
-                <div class="milestone__media">
-                  <img :src="m3" alt="" class="milestone__img" />
+              <article class="timeline-item">
+                <div class="timeline-item__track" aria-hidden="true">
+                  <span class="timeline-item__dot" />
                 </div>
-                <div class="milestone__glass">
-                  <div class="milestone__title">勇创新高</div>
-                  <div class="milestone__sub">2017-2026</div>
-                  <div class="milestone__text">
-                    从创办至今河南美恺装饰有限公司业务年年攀高，至今以完成门面房店铺交付150+，商务办公装修30+，个人家庭装修200+，施工额持续走高！
+                <div class="timeline-item__period">2021 - 2024</div>
+                <div class="timeline-item__card">
+                  <div class="timeline-item__content">
+                    <h3 class="timeline-item__title">口碑沉淀与区域扩张</h3>
+                    <p class="timeline-item__text">
+                      持续服务河南多地客户，累计企业合作 60+，并与多家标杆餐饮品牌建立长期合作关系，交付质量与效率获得广泛认可。
+                    </p>
+                  </div>
+                  <div class="timeline-item__media">
+                    <img :src="m2" alt="" class="timeline-item__img" />
                   </div>
                 </div>
-              </div>
+              </article>
+
+              <article class="timeline-item">
+                <div class="timeline-item__track" aria-hidden="true">
+                  <span class="timeline-item__dot" />
+                </div>
+                <div class="timeline-item__period">2025 - 至今</div>
+                <div class="timeline-item__card">
+                  <div class="timeline-item__content">
+                    <h3 class="timeline-item__title">规模增长与能力进阶</h3>
+                    <p class="timeline-item__text">
+                      累计实现店铺交付 150+、商务办公 30+、家庭装修 200+，并持续优化工程管理体系，实现项目规模与品质的双增长。
+                    </p>
+                  </div>
+                  <div class="timeline-item__media">
+                    <img :src="m3" alt="" class="timeline-item__img" />
+                  </div>
+                </div>
+              </article>
             </div>
           </div>
         </section>
@@ -195,8 +248,40 @@ import m3 from '@/source/homepage/2/3.jpg'
   box-sizing: border-box;
 }
 
+.about-metrics {
+  padding: 4.5rem 0 1rem;
+}
+
+.about-metrics__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.about-metric {
+  border-radius: 16px;
+  padding: 20px 18px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: linear-gradient(180deg, #fff 0%, #f9f9f9 100%);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.05);
+}
+
+.about-metric__value {
+  font-size: clamp(1.6rem, 2.4vw, 2.1rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.about-metric__label {
+  margin-top: 8px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.66);
+}
+
 .about-intro {
-  padding: 5rem 0;
+  padding: 4rem 0 5.5rem;
 }
 
 .about-intro__grid {
@@ -216,11 +301,11 @@ import m3 from '@/source/homepage/2/3.jpg'
 .about-intro__main {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .about-intro__block {
-  font-size: 24px;
+  font-size: 20px;
   font-feature-settings: 'lnum' 1, 'tnum' 1;
 }
 
@@ -238,121 +323,185 @@ import m3 from '@/source/homepage/2/3.jpg'
   color: rgba(0, 0, 0, 0.78);
 }
 
+.about-intro__list {
+  margin: 0.8rem 0 0;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.7;
+  color: rgba(0, 0, 0, 0.8);
+}
+
 .about-intro__em {
   font-weight: 900;
 }
 
-.about-intro__link {
-  width: fit-content;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: -0.12px;
-  text-decoration: underline;
-  color: inherit;
-  line-height: 1.2;
-}
-
-.about-intro__link:hover {
-  opacity: 0.85;
-}
-
-.about-milestones {
-  padding: 2.5rem 0 5rem;
-}
-
-.about-milestones__stack {
+.about-intro__cta {
   display: flex;
-  flex-direction: column;
-  gap: 22px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.milestone {
-  position: relative;
-  width: 100%;
-  border-radius: 30px;
-  overflow: hidden;
-  padding: 20px 0;
-  min-height: 424px;
-  background: #f7f7f7;
+.about-intro__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  transition: transform 0.18s ease;
 }
 
-.milestone__media {
-  position: absolute;
-  top: 20px;
-  bottom: 20px;
-  right: 40px;
-  width: min(714px, 62%);
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 15px 10px rgba(0, 0, 0, 0.25);
+.about-intro__btn:hover {
+  transform: translateY(-1px);
+}
+
+.about-intro__btn--primary {
+  background: #111;
+  color: #fff;
+}
+
+.about-intro__btn--ghost {
+  color: #111;
+  border: 1px solid rgba(0, 0, 0, 0.22);
   background: #fff;
 }
 
-.milestone--left .milestone__media {
-  left: 40px;
-  right: auto;
-  width: min(617px, 55%);
+.about-milestones {
+  padding: 1.5rem 0 5rem;
 }
 
-.milestone__img {
+.about-milestones__head {
+  margin-bottom: 1.4rem;
+}
+
+.about-milestones__kicker {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.48);
+}
+
+.about-milestones__title {
+  margin: 0.45rem 0 0;
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  line-height: 1.28;
+  letter-spacing: -0.02em;
+}
+
+.about-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.timeline-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px 140px 1fr;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.timeline-item__track {
+  position: relative;
+}
+
+.timeline-item__track::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: -16px;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.08) 100%);
+}
+
+.timeline-item:last-child .timeline-item__track::before {
+  bottom: 0;
+}
+
+.timeline-item__dot {
+  position: absolute;
+  left: 4px;
+  top: 20px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #111;
+  box-shadow: 0 0 0 4px rgba(17, 17, 17, 0.12);
+}
+
+.timeline-item__period {
+  padding-top: 16px;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(0, 0, 0, 0.58);
+}
+
+.timeline-item__card {
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: linear-gradient(180deg, #fff 0%, #f8f8f8 100%);
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 18px;
+  padding: 18px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+}
+
+.timeline-item__content {
+  min-width: 0;
+}
+
+.timeline-item__title {
+  margin: 0;
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  line-height: 1.3;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.timeline-item__text {
+  margin: 0.55rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.72;
+  color: rgba(0, 0, 0, 0.72);
+}
+
+.timeline-item__media {
+  border-radius: 14px;
+  overflow: hidden;
+  height: 180px;
+  background: #fff;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.14);
+}
+
+.timeline-item__img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.milestone__glass {
-  position: absolute;
-  top: 74px;
-  left: 26px;
-  width: min(472px, 44%);
-  border-radius: 20px;
-  padding: 19px 10px;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
-  backdrop-filter: blur(12.5px);
-  box-shadow: 5px 10px 20px rgba(0, 0, 0, 0.25);
-}
-
-.milestone--left .milestone__glass {
-  left: auto;
-  right: 26px;
-  top: 97px;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.04));
-}
-
-.milestone__glass::after {
-  content: '';
-  position: absolute;
-  inset: -5px;
-  border: 5px solid #fbf1f1;
-  border-radius: 25px;
-  pointer-events: none;
-}
-
-.milestone__title {
-  font-weight: 900;
-  font-size: 24px;
-  line-height: 1.15;
-  color: #000;
-}
-
-.milestone__sub {
-  margin-top: 0.25rem;
-  font-weight: 900;
-  font-size: 24px;
-  line-height: 1.15;
-  color: #000;
-}
-
-.milestone__text {
-  margin-top: 0.6rem;
-  font-size: 14px;
-  line-height: 1.65;
-  color: rgba(0, 0, 0, 0.75);
-  font-weight: 700;
-}
-
 @media (max-width: 980px) {
+  .about-metrics {
+    padding-top: 3.25rem;
+  }
+
+  .about-metrics__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .about-intro__grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
@@ -362,33 +511,36 @@ import m3 from '@/source/homepage/2/3.jpg'
     width: 100%;
   }
 
-  .milestone {
-    padding: 20px 0 28px;
-    min-height: auto;
+  .about-intro__block {
+    font-size: 18px;
   }
 
-  .milestone__media,
-  .milestone--left .milestone__media {
-    position: relative;
-    top: auto;
-    left: auto;
-    right: auto;
-    bottom: auto;
-    width: 100%;
-    height: 260px;
-    margin: 0 auto;
-    border-radius: 20px;
-    box-shadow: 0 12px 18px rgba(0, 0, 0, 0.18);
+  .timeline-item {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 
-  .milestone__glass,
-  .milestone--left .milestone__glass {
-    position: relative;
-    top: auto;
-    left: auto;
-    right: auto;
-    width: 100%;
-    margin: 14px auto 0;
+  .timeline-item__track {
+    display: none;
+  }
+
+  .timeline-item__period {
+    padding-top: 0;
+  }
+
+  .timeline-item__card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .timeline-item__media {
+    height: 220px;
+  }
+}
+
+@media (max-width: 640px) {
+  .about-metrics__grid {
+    grid-template-columns: 1fr;
   }
 }
 
