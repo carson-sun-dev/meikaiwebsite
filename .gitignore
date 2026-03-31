@@ -1,0 +1,62 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependency directories
+node_modules/
+
+# pnpm local store/symlink cache
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+coverage/
+.out/
+.next/
+.nuxt/
+.svelte-kit/
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS / misc temp
+Thumbs.db
+*.tmp
+*.temp
+
+# Python (future backend)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Java (future backend)
+target/
+.gradle/
+
+# Go (future backend)
+bin/
+
+# Rust (future backend)
+target/
+
+# Local sqlite / db files
+*.sqlite
+*.db
