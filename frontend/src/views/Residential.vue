@@ -81,8 +81,8 @@
       <section class="res-cta">
         <div class="res-wrap res-cta__inner">
           <h2 class="res-cta__title">准备开始你的家装计划？</h2>
-          <p class="res-cta__desc">告诉我们户型与需求，快速获得初步建议与预算区间。</p>
-          <router-link class="res-btn res-btn--primary" to="/contact">立即咨询</router-link>
+          <p class="res-cta__desc">请告诉我们户型与需求，快速获得初步建议与预算区间。</p>
+          <router-link class="res-btn res-btn--cta" to="/contact">立即咨询</router-link>
         </div>
       </section>
     </main>
@@ -226,6 +226,21 @@ const cases = [
 .res-cta__inner { border-radius: 22px; padding: 1.8rem; background: #fff; border: 1px solid rgba(0,0,0,.08); text-align: center; }
 .res-cta__title { margin: 0; font-size: clamp(1.3rem, 2vw, 1.8rem); }
 .res-cta__desc { margin: .55rem auto 1rem; max-width: 40rem; color: rgba(0,0,0,.68); line-height: 1.65; }
+.res-cta .res-btn--cta {
+  margin-top: 1rem;
+  min-width: 120px;
+  height: 36px;
+  padding: 0 20px;
+  border: none;
+  background: #ff5449;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.res-cta .res-btn--cta:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
 @media (max-width: 980px) {
   .res-highlights__grid,
   .res-process__list,

@@ -1,8 +1,6 @@
 <template>
   <div class="home-page">
-    <HomeSectionFade appear-immediately>
-      <HomeHeroSection @quote-search="onHeroQuoteSearch" />
-    </HomeSectionFade>
+    <HomeHeroSection @quote-search="onHeroQuoteSearch" />
 
     <HomeSectionFade>
       <CompanyIntro />

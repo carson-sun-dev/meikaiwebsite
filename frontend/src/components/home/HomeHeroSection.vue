@@ -43,7 +43,7 @@ import imgStore3 from '@/source/homepage/1/store3.jpg'
 import HeroQuoteSearchPill from './HeroQuoteSearchPill.vue'
 
 /** 背景与玻璃条文案同一时刻切换（同一 tick） */
-const HERO_CAROUSEL_INTERVAL_MS = 5500
+const HERO_CAROUSEL_INTERVAL_MS = 4000
 
 const emit = defineEmits<{
   quoteSearch: [targetRoute: string]
@@ -138,6 +138,8 @@ function onQuoteSearchClick() {
   min-height: 100dvh;
   flex-direction: column;
   overflow: hidden;
+  opacity: 0;
+  animation: hero-section-fade 0.55s ease forwards;
 }
 
 .hero-base {
@@ -211,7 +213,7 @@ function onQuoteSearchClick() {
     'Hiragino Sans GB',
     'Microsoft YaHei',
     sans-serif;
-  font-size: clamp(2.5rem, 7.5vw + 1rem, 5.5rem);
+  font-size: clamp(2.85rem, 8.2vw + 1rem, 6.1rem);
   font-weight: 900;
   font-style: normal;
   line-height: 1.06;
@@ -245,8 +247,8 @@ function onQuoteSearchClick() {
 .hero-title-first {
   flex: 1 1 0;
   min-width: 0;
-  font-size: clamp(2.9rem, 8.4vw + 1rem, 6.2rem);
-  transform: skewX(-5deg);
+  font-size: clamp(3.25rem, 9.2vw + 1rem, 6.85rem);
+  transform: skewX(-3deg);
 }
 
 .hero-title-second {
@@ -255,7 +257,7 @@ function onQuoteSearchClick() {
   max-width: 940px;
   margin: 0;
   text-align: center;
-  transform: skewX(-5deg);
+  transform: skewX(-3deg);
 }
 
 @media (max-width: 900px) {
@@ -270,6 +272,22 @@ function onQuoteSearchClick() {
 
   .hero-frame6 {
     align-items: stretch;
+  }
+}
+
+@keyframes hero-section-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-section {
+    opacity: 1;
+    animation: none;
   }
 }
 </style>

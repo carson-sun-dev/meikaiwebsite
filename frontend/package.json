@@ -3,6 +3,27 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.32.1",
+  "pnpm": {
+    "overrides": {
+      "vue": "beta",
+      "@vue/compiler-core": "beta",
+      "@vue/compiler-dom": "beta",
+      "@vue/compiler-sfc": "beta",
+      "@vue/compiler-ssr": "beta",
+      "@vue/compiler-vapor": "beta",
+      "@vue/reactivity": "beta",
+      "@vue/runtime-core": "beta",
+      "@vue/runtime-dom": "beta",
+      "@vue/runtime-vapor": "beta",
+      "@vue/server-renderer": "beta",
+      "@vue/shared": "beta",
+      "@vue/compat": "beta"
+    },
+    "peerDependencyRules": {
+      "allowAny": ["vue"]
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",

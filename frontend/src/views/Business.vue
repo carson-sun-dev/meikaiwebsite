@@ -81,8 +81,8 @@
       <section class="business-cta">
         <div class="business-wrap business-cta__inner">
           <h2 class="business-cta__title">想升级你的办公空间？</h2>
-          <p class="business-cta__desc">提交面积与需求，我们将提供初步平面建议和预算区间。</p>
-          <router-link class="business-btn business-btn--primary" to="/contact">立即咨询</router-link>
+          <p class="business-cta__desc">请告诉我们面积与需求，我们将提供初步平面建议和预算区间。</p>
+          <router-link class="business-btn business-btn--cta" to="/contact">立即咨询</router-link>
         </div>
       </section>
     </main>
@@ -101,7 +101,7 @@ import imgB from '@/source/homepage/1/bussiness3.jpg'
 const highlights = [
   {
     title: '效率导向布局',
-    text: '围绕部门协作和会议频次规划空间，减少无效动线，提升团队沟通效率。',
+    text: '围绕部门协作和会议频次规划空间，减少无效跑动，提升团队沟通效率。',
   },
   {
     title: '企业形象统一',
@@ -120,7 +120,7 @@ const processSteps = [
   },
   {
     title: '平面优化与预算确认',
-    desc: '输出动线与工位规划，结合材料与机电方案形成清晰报价。',
+    desc: '深度优化办公区域与工位排布，明码标价、绝无隐形消费的预算方案。',
   },
   {
     title: '施工管理与交付培训',
@@ -163,7 +163,7 @@ const cases = [
     type: '总部办公',
     area: '680m²',
     duration: '工期 76 天',
-    desc: '以企业文化为核心打造接待与展示空间，强化访客动线与品牌记忆点。',
+    desc: '以企业文化为核心打造接待与展示空间，强化访客体验与品牌记忆点。',
   },
 ] as const
 </script>
@@ -226,6 +226,21 @@ const cases = [
 .business-cta__inner { border-radius: 22px; padding: 1.8rem; background: #fff; border: 1px solid rgba(0,0,0,.08); text-align: center; }
 .business-cta__title { margin: 0; font-size: clamp(1.3rem, 2vw, 1.8rem); }
 .business-cta__desc { margin: .55rem auto 1rem; max-width: 40rem; color: rgba(0,0,0,.68); line-height: 1.65; }
+.business-cta .business-btn--cta {
+  margin-top: 1rem;
+  min-width: 120px;
+  height: 36px;
+  padding: 0 20px;
+  border: none;
+  background: #ff5449;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.business-cta .business-btn--cta:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
 @media (max-width: 980px) {
   .business-highlights__grid,
   .business-process__list,

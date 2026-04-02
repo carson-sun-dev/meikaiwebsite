@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+.env
+.env.*
+!.env.docker.example  # 允许保留模版作为参考
+*.md
+playwright-report
+test-results
+.vscode               # 补充：排除编辑器配置
+.DS_Store             # 补充：排除 Mac 特有的系统文件

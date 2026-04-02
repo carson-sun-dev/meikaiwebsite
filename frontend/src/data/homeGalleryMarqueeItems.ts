@@ -2,7 +2,7 @@
  * 图片来自 `src/source/homepage/3/`，文件名（不含扩展名）即轮播下方说明。
  * 当前按文件体积大致对应分辨率：最大的 4 张作「大」、最小的 4 张作「小」、中间 4 张作「中」；每组顺序 大→小→中。
  */
-import img_zhongshi_keiting from '@/source/homepage/3/中式典雅客厅.jpg'
+import img_dianya_keiting from '@/source/homepage/3/典雅客厅.jpg'
 import img_zhongshi_canguan from '@/source/homepage/3/中式餐馆.jpg'
 import img_xiuxian_huiyishi from '@/source/homepage/3/休闲会议室.jpg'
 import img_fushi_dianpu from '@/source/homepage/3/复式店铺.jpg'
@@ -51,7 +51,7 @@ export const homeGalleryMarqueeItems: HomeGallerySlideItem[] = [
   /* 组 1：大(最大档) → 小 → 中 */
   { id: 'g1-1', image: img_qingxin_fenwei, caption: '清新氛围', size: 'large', variant: 'frame' },
   { id: 'g1-2', image: img_canyin_baojian, caption: '餐饮包间', size: 'small' },
-  { id: 'g1-3', image: img_zhongshi_keiting, caption: '中式典雅客厅', size: 'medium' },
+  { id: 'g1-3', image: img_dianya_keiting, caption: '典雅客厅', size: 'medium' },
   /* 组 2 */
   { id: 'g2-1', image: img_zhongshi_canguan, caption: '中式餐馆', size: 'large', variant: 'frame' },
   { id: 'g2-2', image: img_fushi_dianpu, caption: '复式店铺', size: 'small' },

@@ -4,16 +4,21 @@
       <div class="home-footer__inner">
         <div>
           <h2 class="home-footer__contact-title">保持联系</h2>
-          <div class="home-footer__email-row">
+          <form class="home-footer__email-row" @submit.prevent="onSubmitPhone">
             <input
+              v-model="phone"
               type="tel"
-              placeholder="请输入电话"
+              name="footer-phone"
+              autocomplete="tel"
+              placeholder="请输入您的电话"
               class="home-footer__email-input"
+              aria-label="联系电话"
             />
-            <button type="button" class="home-footer__email-submit" aria-label="提交">
+            <button type="submit" class="home-footer__email-submit" aria-label="提交电话">
               <PaperPlaneIcon class="home-footer__submit-icon" />
             </button>
-          </div>
+          </form>
+          <p v-if="footerError" class="home-footer__error" role="alert">{{ footerError }}</p>
           <p class="home-footer__contact-hint">我们的总工程师将尽快联系您，为您排忧。</p>
         </div>
 
@@ -67,15 +72,61 @@
         </div>
       </div>
     </footer>
+
+    <div
+      v-if="showSuccessModal"
+      class="home-footer__modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="提交成功弹窗"
+    >
+      <div class="home-footer__modal-card">
+        <div class="home-footer__modal-title">提交成功</div>
+        <div class="home-footer__modal-body">
+          感谢您的信任，我们的总工程师将根据您的信息尽快联系您！
+        </div>
+        <button type="button" class="home-footer__modal-close" @click="showSuccessModal = false">关闭</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Location, Phone } from '@element-plus/icons-vue'
 
+import { submitFooterPhone } from '@/api/leads'
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon.vue'
 import logoImg from '@/source/logo/logo.png'
 import ziImg from '@/source/logo/zi.png'
+import { validatePhone } from '@/utils/phoneValidation'
+
+const phone = ref('')
+const footerError = ref('')
+const showSuccessModal = ref(false)
+
+async function onSubmitPhone() {
+  footerError.value = ''
+  showSuccessModal.value = false
+
+  const raw = phone.value.trim()
+  if (!raw) {
+    footerError.value = '请填写联系电话'
+    return
+  }
+  if (!validatePhone(raw)) {
+    footerError.value = '请填写正确的联系电话（手机号）'
+    return
+  }
+
+  try {
+    await submitFooterPhone(raw)
+    showSuccessModal.value = true
+    phone.value = ''
+  } catch (e) {
+    footerError.value = e instanceof Error ? e.message : '提交失败，请稍后重试'
+  }
+}
 </script>
 
 <style scoped>
@@ -143,6 +194,15 @@ import ziImg from '@/source/logo/zi.png'
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.05);
   padding: 0.5rem 1rem;
+}
+
+.home-footer__error {
+  margin: 0.5rem auto 0;
+  max-width: 28rem;
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: #ff8a8a;
 }
 
 .home-footer__email-input {
@@ -315,5 +375,55 @@ import ziImg from '@/source/logo/zi.png'
 .home-footer__legal-link:hover {
   color: rgba(255, 255, 255, 0.75);
   text-decoration: underline;
+}
+
+/* 与联系页报价表单「提交成功」弹窗一致 */
+.home-footer__modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  box-sizing: border-box;
+}
+
+.home-footer__modal-card {
+  width: 100%;
+  max-width: 520px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.25rem 1.25rem 1rem;
+  box-sizing: border-box;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 0.2);
+}
+
+.home-footer__modal-title {
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-size: 1.1rem;
+  color: #111;
+}
+
+.home-footer__modal-body {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  color: rgba(0, 0, 0, 0.8);
+  line-height: 1.6;
+}
+
+.home-footer__modal-close {
+  margin-top: 1.1rem;
+  height: 42px;
+  width: 100%;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: #111;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
 }
 </style>

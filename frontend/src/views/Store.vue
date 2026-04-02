@@ -10,7 +10,7 @@
           <p class="store-hero__kicker">BRAND STORE INTERIOR</p>
           <h1 class="store-hero__title">品牌店装，不止好看，更要高效开业</h1>
           <p class="store-hero__desc">
-            围绕动线、坪效、品牌感和施工周期，为餐饮、零售、美业等门店提供从设计到交付的一体化落地方案。
+            围绕客户体验、店铺氛围、品牌感和施工周期，为餐饮、零售、美业等门店提供从设计到交付的一体化落地方案。
           </p>
           <div class="store-hero__actions">
             <router-link class="store-btn store-btn--primary" to="/contact">获取门店报价</router-link>
@@ -81,8 +81,8 @@
       <section class="store-cta">
         <div class="store-wrap store-cta__inner">
           <h2 class="store-cta__title">准备启动你的店铺装修项目？</h2>
-          <p class="store-cta__desc">提交基础信息，我们将在 30 分钟内反馈初步建议与预算范围。</p>
-          <router-link class="store-btn store-btn--primary" to="/contact">立即咨询</router-link>
+          <p class="store-cta__desc">请告诉我们工程的基础信息，我们将尽快根据信息反馈初步建议与预算范围。</p>
+          <router-link class="store-btn store-btn--cta" to="/contact">立即咨询</router-link>
         </div>
       </section>
     </main>
@@ -105,7 +105,7 @@ const highlights = [
   },
   {
     title: '品牌识别落地',
-    text: '统一门头、前台、动线与材质语言，让空间与品牌调性一致。',
+    text: '统一门头、前台、灯光等材质，让空间与品牌调性一致。',
   },
   {
     title: '预算透明可控',
@@ -120,7 +120,7 @@ const processSteps = [
   },
   {
     title: '方案设计与预算拆解',
-    desc: '输出空间动线、效果与施工图，同时给出分项报价与材料建议。',
+    desc: '以客户需求为主、设计效果与施工图，同时给出分项报价与材料建议。',
   },
   {
     title: '施工交付与验收',
@@ -132,7 +132,7 @@ const priceBands = [
   {
     label: '标准升级',
     range: '￥800 - ￥1200 / m²',
-    hint: '适合轻餐、零售标准化门店，重点优化基础形象与动线。',
+    hint: '适合轻餐、零售标准化门店，重点优化灯光和基础形象。',
   },
   {
     label: '品牌强化',
@@ -154,7 +154,7 @@ const cases = [
     industry: '餐饮',
     area: '230m²',
     duration: '工期 45 天',
-    desc: '围绕翻台效率重做前后场动线，重点优化门头识别、等位区体验与后厨动线衔接。',
+    desc: '围绕翻台效率重做前后场区分，重点优化门头识别、等位区体验与后厨衔接。',
   },
   {
     title: '轻食品牌示范店',
@@ -172,7 +172,7 @@ const cases = [
     industry: '零售',
     area: '150m²',
     duration: '工期 30 天',
-    desc: '通过陈列分区与灯光层次优化消费动线，兼顾坪效和陈列灵活度，降低后期改造成本。',
+    desc: '通过陈列分区与灯光层次优化消费费用，兼顾坪效和陈列灵活度，降低后期改造成本。',
   },
   {
     title: '精品美业门店',
@@ -489,6 +489,23 @@ const cases = [
   max-width: 40rem;
   color: rgba(0, 0, 0, 0.68);
   line-height: 1.65;
+}
+
+.store-cta .store-btn--cta {
+  margin-top: 1rem;
+  min-width: 120px;
+  height: 36px;
+  padding: 0 20px;
+  border: none;
+  background: #ff5449;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.store-cta .store-btn--cta:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
 }
 
 @media (max-width: 980px) {

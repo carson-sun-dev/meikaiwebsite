@@ -32,11 +32,11 @@
                 <div class="about-metric__label">累计项目交付</div>
               </article>
               <article class="about-metric">
-                <div class="about-metric__value">60+</div>
+                <div class="about-metric__value">40+</div>
                 <div class="about-metric__label">服务企业客户</div>
               </article>
               <article class="about-metric">
-                <div class="about-metric__value">20年</div>
+                <div class="about-metric__value">30年</div>
                 <div class="about-metric__label">总工程师实战经验</div>
               </article>
             </div>
@@ -61,7 +61,7 @@
                 </div>
 
                 <div class="about-intro__block">
-                  <div class="about-intro__h">二十年工程积淀，全球直供正品保障</div>
+                  <div class="about-intro__h">三十年工程积淀，全球直供正品保障</div>
                   <ul class="about-intro__list">
                     <li>总工程师团队具备 <span class="about-intro__em">20</span> 年以上施工与管理经验。</li>
                     <li>采用一对一深度对接机制，确保关键节点沟通透明。</li>

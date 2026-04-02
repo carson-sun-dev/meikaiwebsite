@@ -4,6 +4,7 @@
     :class="{
       'nav-bar--contrast-normal': isHomeRoute && contrastMode === 'normal',
       'nav-bar--contrast-high': isHomeRoute && contrastMode === 'high',
+      'nav-bar--solid-tall': isSolidNavBar,
     }"
     :style="{ background: navBackground }"
   >
@@ -59,6 +60,12 @@ const props = withDefaults(
 const isHomeRoute = computed(() => route.path === '/' || route.path === '/home')
 const contrastMode = computed(() => props.contrastMode)
 
+/** 黑底导航页（非首页、非关于）：加高黑色条区域 */
+const isSolidNavBar = computed(() => {
+  const p = route.path
+  return p !== '/' && p !== '/home' && p !== '/about'
+})
+
 const navBackground = computed(() => {
   // 首页 / 关于我们需要透明融入 Hero；联系页及其他页面保持黑色。
   // 当前路由：`/` 会重定向到 `/home`，但这里同时兼容。
@@ -89,6 +96,10 @@ function onToggleLocale() {
 
 .nav-bar--contrast-high {
   background: rgb(8 8 8 / 0.28);
+}
+
+.nav-bar--solid-tall {
+  padding: 14px 0 18px;
 }
 
 .nav-bar__wrap {

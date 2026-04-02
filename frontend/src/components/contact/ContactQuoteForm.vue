@@ -22,9 +22,16 @@
         <div class="contact-quote__section-title">通用</div>
         <div class="contact-quote__grid">
           <div class="contact-quote__field">
-            <label class="contact-quote__label" for="building-type">建筑类型（新建/翻新）</label>
+            <label class="contact-quote__label contact-quote__label--required" for="building-type">
+              建筑类型（新建/翻新）
+            </label>
             <div class="contact-quote__select">
-              <select id="building-type" v-model="buildingType" aria-label="建筑类型">
+              <select
+                id="building-type"
+                v-model="buildingType"
+                aria-label="建筑类型"
+                aria-required="true"
+              >
                 <option disabled value="">请选择</option>
                 <option value="new">新建</option>
                 <option value="renovation">翻新</option>
@@ -35,14 +42,13 @@
           </div>
 
           <div class="contact-quote__field">
-            <label class="contact-quote__label" for="schedule">预计工期（1月-3月）</label>
+            <label class="contact-quote__label contact-quote__label--required" for="schedule">预计工期</label>
             <div class="contact-quote__select">
-              <select id="schedule" v-model="schedule" aria-label="预计工期">
+              <select id="schedule" v-model="schedule" aria-label="预计工期" aria-required="true">
                 <option disabled value="">请选择</option>
+                <option value="1">少于1个月</option>
                 <option value="1-3">1月-3月</option>
-                <option value="4-6">4月-6月</option>
-                <option value="7-9">7月-9月</option>
-                <option value="10-12">10月-12月</option>
+                <option value="4-6">4月-6月</option>          
                 <option value="other">其他</option>
               </select>
               <span class="contact-quote__select-arrow" aria-hidden="true" />
@@ -55,13 +61,13 @@
           <div class="contact-quote__section-title contact-quote__section-title--tight">工程细节</div>
           <div class="contact-quote__grid">
             <div class="contact-quote__field">
-              <label class="contact-quote__label" for="store-type">店铺类型（餐饮/零售/美容美发/健身房）</label>
+              <label class="contact-quote__label" for="store-type">店铺类型（餐饮、零售等）</label>
               <div class="contact-quote__select">
                 <select id="store-type" v-model="storeType" aria-label="店铺类型">
                   <option disabled value="">请选择</option>
                   <option value="food">餐饮</option>
-                  <option value="retail">零售</option>
-                  <option value="beauty">美容美发</option>
+                  <option value="retail">品牌零售</option>
+                  <option value="entertainment">娱乐（酒吧/KTV/密室逃脱等）</option>
                   <option value="fitness">健身房</option>
                   <option value="other">其他</option>
                 </select>
@@ -70,9 +76,9 @@
             </div>
 
             <div class="contact-quote__field">
-              <label class="contact-quote__label" for="shop-area">门店面积（营业面积）</label>
+              <label class="contact-quote__label contact-quote__label--required" for="shop-area">门店总面积</label>
               <div class="contact-quote__select">
-                <select id="shop-area" v-model="shopArea" aria-label="营业面积">
+                <select id="shop-area" v-model="shopArea" aria-label="营业面积" aria-required="true">
                   <option disabled value="">请选择</option>
                   <option value="lt50">50㎡以下</option>
                   <option value="50-100">50-100㎡</option>
@@ -99,27 +105,40 @@
               </div>
             </div>
 
-            <div class="contact-quote__field">
-              <label class="contact-quote__label" for="door-sign">门头需求（是否需要发光字/橱窗设计/遮阳棚）</label>
-              <select id="door-sign" v-model="doorSignNeeds" class="contact-quote__multi" multiple aria-label="门头需求">
-                <option value="light">发光字</option>
-                <option value="window">橱窗设计</option>
-                <option value="sunshelter">遮阳棚</option>
-                <option value="other">其他</option>
-              </select>
+            <div class="contact-quote__field contact-quote__field--full">
+              <span class="contact-quote__label">门头需求（可多选）</span>
+              <details class="contact-quote__fold">
+                <summary class="contact-quote__fold-summary">
+                  <span class="contact-quote__fold-hint">{{ summarizeMulti(doorSignNeeds, doorSignOptions) }}</span>
+                  <span class="contact-quote__fold-arrow" aria-hidden="true" />
+                </summary>
+                <div class="contact-quote__fold-panel">
+                  <label v-for="opt in doorSignOptions" :key="opt.value" class="contact-quote__check">
+                    <input v-model="doorSignNeeds" type="checkbox" :value="opt.value" />
+                    {{ opt.label }}
+                  </label>
+                </div>
+              </details>
+            </div>
+
+            <div class="contact-quote__field contact-quote__field--full">
+              <span class="contact-quote__label">特殊设备（可多选）</span>
+              <details class="contact-quote__fold">
+                <summary class="contact-quote__fold-summary">
+                  <span class="contact-quote__fold-hint">{{ summarizeMulti(specialDevices, specialDeviceOptions) }}</span>
+                  <span class="contact-quote__fold-arrow" aria-hidden="true" />
+                </summary>
+                <div class="contact-quote__fold-panel">
+                  <label v-for="opt in specialDeviceOptions" :key="opt.value" class="contact-quote__check">
+                    <input v-model="specialDevices" type="checkbox" :value="opt.value" />
+                    {{ opt.label }}
+                  </label>
+                </div>
+              </details>
             </div>
 
             <div class="contact-quote__field">
-              <label class="contact-quote__label" for="special-devices">特殊设备（大功率用电/水电改造）</label>
-              <select id="special-devices" v-model="specialDevices" class="contact-quote__multi" multiple aria-label="特殊设备">
-                <option value="high-power">大功率用电</option>
-                <option value="water-elec">水电改造</option>
-                <option value="other">其他</option>
-              </select>
-            </div>
-
-            <div class="contact-quote__field">
-              <label class="contact-quote__label" for="license-assist">营业执照协助（代办建筑许可/消防）</label>
+              <label class="contact-quote__label" for="license-assist">营业执照协助（建筑许可/消防）</label>
               <div class="contact-quote__select">
                 <select id="license-assist" v-model="licenseAssist" aria-label="营业执照协助">
                   <option disabled value="">请选择</option>
@@ -140,9 +159,14 @@
           <div class="contact-quote__section-title contact-quote__section-title--tight">商务·办公</div>
           <div class="contact-quote__grid">
             <div class="contact-quote__field">
-              <label class="contact-quote__label" for="work-area">工位面积</label>
+              <label class="contact-quote__label contact-quote__label--required" for="work-area">工程面积</label>
               <div class="contact-quote__select">
-                <select id="work-area" v-model="businessSeatArea" aria-label="工位面积">
+                <select
+                  id="work-area"
+                  v-model="businessSeatArea"
+                  aria-label="工程面积"
+                  aria-required="true"
+                >
                   <option disabled value="">请选择</option>
                   <option value="lt100">100㎡以下</option>
                   <option value="100-200">100-200㎡</option>
@@ -158,7 +182,7 @@
               <label class="contact-quote__label" for="office-count">独立办公室数量</label>
               <div class="contact-quote__select">
                 <select id="office-count" v-model="businessOfficeCount" aria-label="独立办公室数量">
-                  <option disabled value="">请选择</option>
+                  <option value="">请选择</option>
                   <option value="1">1间</option>
                   <option value="2-3">2-3间</option>
                   <option value="4-5">4-5间</option>
@@ -183,22 +207,43 @@
               </div>
             </div>
 
-            <div class="contact-quote__field">
-              <label class="contact-quote__label" for="func-zone">功能分区（前台/茶水间/机房/休息室）</label>
-              <select id="func-zone" v-model="businessFuncZones" class="contact-quote__multi" multiple aria-label="功能分区">
-                <option value="front">前台</option>
-                <option value="tea">茶水间</option>
-                <option value="server">机房</option>
-                <option value="rest">休息室</option>
-                <option value="other">其他</option>
-              </select>
+            <div class="contact-quote__field contact-quote__field--full">
+              <span class="contact-quote__label">功能分区（前台/茶水间/机房/休息室等，可多选）</span>
+              <details class="contact-quote__fold">
+                <summary class="contact-quote__fold-summary">
+                  <span class="contact-quote__fold-hint">{{ summarizeMulti(businessFuncZones, businessFuncZoneOptions) }}</span>
+                  <span class="contact-quote__fold-arrow" aria-hidden="true" />
+                </summary>
+                <div class="contact-quote__fold-panel">
+                  <label v-for="opt in businessFuncZoneOptions" :key="opt.value" class="contact-quote__check">
+                    <input v-model="businessFuncZones" type="checkbox" :value="opt.value" />
+                    {{ opt.label }}
+                  </label>
+                </div>
+              </details>
             </div>
 
+
+            <div class="contact-quote__field contact-quote__field--full">
+              <span class="contact-quote__label">智能化弱电（网络/门禁/视频会议/背景音乐等，可多选）</span>
+              <details class="contact-quote__fold">
+                <summary class="contact-quote__fold-summary">
+                  <span class="contact-quote__fold-hint">{{ summarizeMulti(businessWeakElectrics, businessWeakElectricOptions) }}</span>
+                  <span class="contact-quote__fold-arrow" aria-hidden="true" />
+                </summary>
+                <div class="contact-quote__fold-panel">
+                  <label v-for="opt in businessWeakElectricOptions" :key="opt.value" class="contact-quote__check">
+                    <input v-model="businessWeakElectrics" type="checkbox" :value="opt.value" />
+                    {{ opt.label }}
+                  </label>
+                </div>
+              </details>
+            </div>
             <div class="contact-quote__field">
               <label class="contact-quote__label" for="soundproof">是否需要隔音处理</label>
               <div class="contact-quote__select">
                 <select id="soundproof" v-model="businessSoundproof" aria-label="隔音处理">
-                  <option disabled value="">请选择</option>
+                  <option value="">请选择</option>
                   <option value="yes">需要</option>
                   <option value="no">不需要</option>
                   <option value="other">其他</option>
@@ -208,21 +253,10 @@
             </div>
 
             <div class="contact-quote__field">
-              <label class="contact-quote__label" for="weak-electric">智能化弱电（网络布线/门禁系统/视频会议系统/背景音乐）</label>
-              <select id="weak-electric" v-model="businessWeakElectrics" class="contact-quote__multi" multiple aria-label="智能化弱电">
-                <option value="network">网络布线</option>
-                <option value="access-control">门禁系统</option>
-                <option value="video-meeting">视频会议系统</option>
-                <option value="bgm">背景音乐</option>
-                <option value="other">其他</option>
-              </select>
-            </div>
-
-            <div class="contact-quote__field">
               <label class="contact-quote__label" for="ac-type">空调系统</label>
               <div class="contact-quote__select">
                 <select id="ac-type" v-model="businessAcType" aria-label="空调系统">
-                  <option disabled value="">请选择</option>
+                  <option value="">请选择</option>
                   <option value="independent">独立中央空调</option>
                   <option value="building">楼宇中央空调接入</option>
                   <option value="other">其他</option>
@@ -235,7 +269,7 @@
               <label class="contact-quote__label" for="furniture">家具定制（是否包含工位家具采购）</label>
               <div class="contact-quote__select">
                 <select id="furniture" v-model="businessFurnitureCustomized" aria-label="家具定制">
-                  <option disabled value="">请选择</option>
+                  <option value="">请选择</option>
                   <option value="yes">包含</option>
                   <option value="no">不包含</option>
                   <option value="other">其他</option>
@@ -251,13 +285,20 @@
           <div class="contact-quote__section-title contact-quote__section-title--tight">家装</div>
           <div class="contact-quote__grid">
             <div class="contact-quote__field">
-              <label class="contact-quote__label" for="home-type">房型（几卧/几卫/几客）</label>
+              <label class="contact-quote__label contact-quote__label--required" for="res-home-area">房屋面积（建面）</label>
               <div class="contact-quote__select">
-                <select id="home-type" v-model="resHomeType" aria-label="房型">
+                <select
+                  id="res-home-area"
+                  v-model="resHomeArea"
+                  aria-label="房屋面积"
+                  aria-required="true"
+                >
                   <option disabled value="">请选择</option>
-                  <option value="2-1-1">2卧1卫1客</option>
-                  <option value="3-2-1">3卧2卫1客</option>
-                  <option value="4-3-2">4卧3卫2客</option>
+                  <option value="lt80">80㎡以下</option>
+                  <option value="80-120">80-120㎡</option>
+                  <option value="120-160">120-160㎡</option>
+                  <option value="160-200">160-200㎡</option>
+                  <option value="gt200">200㎡以上</option>
                   <option value="other">其他</option>
                 </select>
                 <span class="contact-quote__select-arrow" aria-hidden="true" />
@@ -265,23 +306,55 @@
             </div>
 
             <div class="contact-quote__field">
-              <label class="contact-quote__label" for="key-areas">重点区域（多选）</label>
-              <select id="key-areas" v-model="resKeyAreas" class="contact-quote__multi" multiple aria-label="重点区域">
-                <option value="whole">全屋翻新</option>
-                <option value="kitchen">厨房改造</option>
-                <option value="bathroom">卫生间翻新</option>
-                <option value="basement">地下室装修</option>
-                <option value="other">其他</option>
-              </select>
+              <label class="contact-quote__label" for="res-bedroom">卧室数量</label>
+              <div class="contact-quote__select">
+                <select id="res-bedroom" v-model="resBedroomCount" aria-label="卧室数量">
+                  <option value="">请选择</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="other">其他</option>
+                </select>
+                <span class="contact-quote__select-arrow" aria-hidden="true" />
+              </div>
             </div>
 
             <div class="contact-quote__field">
-              <label class="contact-quote__label" for="cabinet">厨卫细节（橱柜材质）</label>
+              <label class="contact-quote__label" for="res-bathroom">卫生间数量</label>
               <div class="contact-quote__select">
-                <select id="cabinet" v-model="resCabinetMaterial" aria-label="橱柜材质">
-                  <option disabled value="">请选择</option>
-                  <option value="wood">实木</option>
-                  <option value="lacquer">烤漆</option>
+                <select id="res-bathroom" v-model="resBathroomCount" aria-label="卫生间数量">
+                  <option value="">请选择</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="other">其他</option>
+                </select>
+                <span class="contact-quote__select-arrow" aria-hidden="true" />
+              </div>
+            </div>
+
+            <div class="contact-quote__field">
+              <label class="contact-quote__label" for="res-living">客厅数量</label>
+              <div class="contact-quote__select">
+                <select id="res-living" v-model="resLivingRoomCount" aria-label="客厅数量">
+                  <option value="">请选择</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="other">其他</option>
+                </select>
+                <span class="contact-quote__select-arrow" aria-hidden="true" />
+              </div>
+            </div>
+
+            <div class="contact-quote__field">
+              <label class="contact-quote__label" for="res-dining">餐厅数量</label>
+              <div class="contact-quote__select">
+                <select id="res-dining" v-model="resDiningRoomCount" aria-label="餐厅数量">
+                  <option value="">请选择</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
                   <option value="other">其他</option>
                 </select>
                 <span class="contact-quote__select-arrow" aria-hidden="true" />
@@ -292,7 +365,7 @@
               <label class="contact-quote__label" for="island">岛台需求</label>
               <div class="contact-quote__select">
                 <select id="island" v-model="resIslandNeed" aria-label="岛台需求">
-                  <option disabled value="">请选择</option>
+                  <option value="">请选择</option>
                   <option value="yes">需要</option>
                   <option value="no">不需要</option>
                   <option value="other">其他</option>
@@ -301,62 +374,53 @@
               </div>
             </div>
 
-            <div class="contact-quote__field">
-              <label class="contact-quote__label" for="toilet">智能马桶</label>
-              <div class="contact-quote__select">
-                <select id="toilet" v-model="resSmartToilet" aria-label="智能马桶">
-                  <option disabled value="">请选择</option>
-                  <option value="yes">需要</option>
-                  <option value="no">不需要</option>
-                  <option value="other">其他</option>
-                </select>
-                <span class="contact-quote__select-arrow" aria-hidden="true" />
-              </div>
+
+            <div class="contact-quote__field contact-quote__field--full">
+              <span class="contact-quote__label">地板和墙面（可多选）</span>
+              <details class="contact-quote__fold">
+                <summary class="contact-quote__fold-summary">
+                  <span class="contact-quote__fold-hint">{{ summarizeMulti(resFloorWall, resFloorWallOptions) }}</span>
+                  <span class="contact-quote__fold-arrow" aria-hidden="true" />
+                </summary>
+                <div class="contact-quote__fold-panel">
+                  <label v-for="opt in resFloorWallOptions" :key="opt.value" class="contact-quote__check">
+                    <input v-model="resFloorWall" type="checkbox" :value="opt.value" />
+                    {{ opt.label }}
+                  </label>
+                </div>
+              </details>
             </div>
 
-            <div class="contact-quote__field">
-              <label class="contact-quote__label" for="shower">恒温花洒</label>
-              <div class="contact-quote__select">
-                <select id="shower" v-model="resThermostaticShower" aria-label="恒温花洒">
-                  <option disabled value="">请选择</option>
-                  <option value="yes">需要</option>
-                  <option value="no">不需要</option>
-                  <option value="other">其他</option>
-                </select>
-                <span class="contact-quote__select-arrow" aria-hidden="true" />
-              </div>
+            <div class="contact-quote__field contact-quote__field--full">
+              <span class="contact-quote__label">收纳系统（可多选）</span>
+              <details class="contact-quote__fold">
+                <summary class="contact-quote__fold-summary">
+                  <span class="contact-quote__fold-hint">{{ summarizeMulti(resStorage, resStorageOptions) }}</span>
+                  <span class="contact-quote__fold-arrow" aria-hidden="true" />
+                </summary>
+                <div class="contact-quote__fold-panel">
+                  <label v-for="opt in resStorageOptions" :key="opt.value" class="contact-quote__check">
+                    <input v-model="resStorage" type="checkbox" :value="opt.value" />
+                    {{ opt.label }}
+                  </label>
+                </div>
+              </details>
             </div>
 
-            <div class="contact-quote__field">
-              <label class="contact-quote__label" for="floor-wall">地板墙面（多选）</label>
-              <select id="floor-wall" v-model="resFloorWall" class="contact-quote__multi" multiple aria-label="地板墙面">
-                <option value="wood-floor">实木地板</option>
-                <option value="composite-floor">复合地板</option>
-                <option value="panel">护墙板定制</option>
-                <option value="art-paint">艺术漆</option>
-                <option value="wallpaper">壁纸</option>
-                <option value="other">其他</option>
-              </select>
-            </div>
-
-            <div class="contact-quote__field">
-              <label class="contact-quote__label" for="storage">收纳系统（多选）</label>
-              <select id="storage" v-model="resStorage" class="contact-quote__multi" multiple aria-label="收纳系统">
-                <option value="wardrobe">步入式衣帽间</option>
-                <option value="shoe-cabinet">嵌入式鞋柜</option>
-                <option value="bookcase">书柜定制</option>
-                <option value="other">其他</option>
-              </select>
-            </div>
-
-            <div class="contact-quote__field">
-              <label class="contact-quote__label" for="smart-home">家庭智能（多选）</label>
-              <select id="smart-home" v-model="resSmartHome" class="contact-quote__multi" multiple aria-label="家庭智能">
-                <option value="smart-light">全屋智能灯光</option>
-                <option value="underfloor-heating">地暖系统</option>
-                <option value="water-purifier">中央净水</option>
-                <option value="other">其他</option>
-              </select>
+            <div class="contact-quote__field contact-quote__field--full">
+              <span class="contact-quote__label">家庭智能（可多选）</span>
+              <details class="contact-quote__fold">
+                <summary class="contact-quote__fold-summary">
+                  <span class="contact-quote__fold-hint">{{ summarizeMulti(resSmartHome, resSmartHomeOptions) }}</span>
+                  <span class="contact-quote__fold-arrow" aria-hidden="true" />
+                </summary>
+                <div class="contact-quote__fold-panel">
+                  <label v-for="opt in resSmartHomeOptions" :key="opt.value" class="contact-quote__check">
+                    <input v-model="resSmartHome" type="checkbox" :value="opt.value" />
+                    {{ opt.label }}
+                  </label>
+                </div>
+              </details>
             </div>
           </div>
         </div>
@@ -365,7 +429,7 @@
 
         <div class="contact-quote__grid contact-quote__grid--contact">
           <div class="contact-quote__field contact-quote__field--gender">
-            <label class="contact-quote__label" for="gender">请告诉我们如何称呼您？</label>
+            <label class="contact-quote__label contact-quote__label--required" for="gender">请告诉我们如何称呼您？</label>
             <div class="contact-quote__gender-row">
               <input
                 v-model="lastName"
@@ -374,18 +438,18 @@
                 maxlength="4"
                 placeholder="请输入您的姓氏"
                 aria-label="姓氏"
+                aria-required="true"
               />
 
               <select id="gender" v-model="gender" aria-label="称呼" class="contact-quote__gender">
                 <option value="mr">先生</option>
                 <option value="ms">女士</option>
               </select>
-              
             </div>
           </div>
 
           <div class="contact-quote__field">
-            <label class="contact-quote__label" for="phone">联系电话</label>
+            <label class="contact-quote__label contact-quote__label--required" for="phone">联系电话</label>
             <input
               id="phone"
               v-model="phone"
@@ -393,6 +457,7 @@
               type="tel"
               placeholder="请输入您的联系电话"
               aria-label="联系电话"
+              aria-required="true"
             />
           </div>
         </div>
@@ -439,8 +504,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
+import { submitQuoteLead } from '@/api/leads'
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon.vue'
 import HomePricingSection from '@/components/home/HomePricingSection.vue'
+import { validatePhone } from '@/utils/phoneValidation'
 
 export type ContactQuoteGender = 'ms' | 'mr'
 
@@ -469,12 +536,13 @@ export type ContactQuotePayload = {
     businessFurnitureCustomized: string
   }
   residential?: {
-    resHomeType: string
+    resHomeArea: string
+    resBedroomCount: string
+    resBathroomCount: string
+    resLivingRoomCount: string
+    resDiningRoomCount: string
     resKeyAreas: string[]
-    resCabinetMaterial: string
     resIslandNeed: string
-    resSmartToilet: string
-    resThermostaticShower: string
     resFloorWall: string[]
     resStorage: string[]
     resSmartHome: string[]
@@ -492,6 +560,77 @@ const emit = defineEmits<{
 }>()
 
 const selectedPlan = ref<ContactQuotePayload['planKey']>('store')
+
+type MultiOpt = { value: string; label: string }
+
+const doorSignOptions: MultiOpt[] = [
+  { value: 'light', label: '发光字' },
+  { value: 'window', label: '橱窗设计' },
+  { value: 'sunshelter', label: '遮阳棚' },
+  { value: 'other', label: '其他' },
+]
+
+const specialDeviceOptions: MultiOpt[] = [
+  { value: 'high-power', label: '大功率用电' },
+  { value: 'water-elec', label: '水电改造' },
+  { value: 'ac', label: '空调' },
+  { value: 'cctv', label: '监控' },
+  { value: 'other', label: '其他' },
+]
+
+const businessFuncZoneOptions: MultiOpt[] = [
+  { value: 'front', label: '前台' },
+  { value: 'tea', label: '茶水间' },
+  { value: 'server', label: '机房' },
+  { value: 'rest', label: '休息室' },
+  { value: 'other', label: '其他' },
+]
+
+const businessWeakElectricOptions: MultiOpt[] = [
+  { value: 'network', label: '网络布线' },
+  { value: 'access-control', label: '门禁系统' },
+  { value: 'video-meeting', label: '视频会议系统' },
+  { value: 'bgm', label: '背景音乐' },
+  { value: 'other', label: '其他' },
+]
+
+const resKeyAreaOptions: MultiOpt[] = [
+  { value: 'whole', label: '全屋翻新' },
+  { value: 'kitchen', label: '厨房改造' },
+  { value: 'bathroom', label: '卫生间翻新' },
+  { value: 'basement', label: '地下室装修' },
+  { value: 'other', label: '其他' },
+]
+
+const resFloorWallOptions: MultiOpt[] = [
+  { value: 'wood-floor', label: '实木地板' },
+  { value: 'composite-floor', label: '复合地板' },
+  { value: 'panel', label: '护墙板定制' },
+  { value: 'art-paint', label: '艺术漆' },
+  { value: 'wallpaper', label: '壁纸' },
+  { value: 'other', label: '其他' },
+]
+
+const resStorageOptions: MultiOpt[] = [
+  { value: 'wardrobe', label: '步入式衣帽间' },
+  { value: 'shoe-cabinet', label: '嵌入式鞋柜' },
+  { value: 'bookcase', label: '书柜定制' },
+  { value: 'other', label: '其他' },
+]
+
+const resSmartHomeOptions: MultiOpt[] = [
+  { value: 'smart-light', label: '全屋智能灯光' },
+  { value: 'underfloor-heating', label: '地暖系统' },
+  { value: 'water-purifier', label: '中央净水' },
+  { value: 'other', label: '其他' },
+]
+
+function summarizeMulti(selected: string[], options: MultiOpt[]): string {
+  if (selected.length === 0) return '请选择'
+  return selected
+    .map((v) => options.find((o) => o.value === v)?.label ?? v)
+    .join('、')
+}
 
 // 通用
 const buildingType = ref('')
@@ -516,12 +655,13 @@ const businessAcType = ref('')
 const businessFurnitureCustomized = ref('')
 
 // 家装
-const resHomeType = ref('')
+const resHomeArea = ref('')
+const resBedroomCount = ref('')
+const resBathroomCount = ref('')
+const resLivingRoomCount = ref('')
+const resDiningRoomCount = ref('')
 const resKeyAreas = ref<string[]>([])
-const resCabinetMaterial = ref('')
 const resIslandNeed = ref('')
-const resSmartToilet = ref('')
-const resThermostaticShower = ref('')
 const resFloorWall = ref<string[]>([])
 const resStorage = ref<string[]>([])
 const resSmartHome = ref<string[]>([])
@@ -549,45 +689,20 @@ const planList = computed(() => [
   },
 ])
 
-function validatePhone(v: string) {
-  // 简单校验：允许 +86 / 0 前缀的 6~15 位数字
-  return /^[+]?(\d){5,15}$/.test(v.replace(/\s+/g, '')) || /^0\d{5,14}$/.test(v)
-}
-
 function validateRequired(): string | null {
   if (!buildingType.value) return '请先选择建筑类型'
   if (!schedule.value) return '请先选择预计工期'
 
   if (selectedPlan.value === 'store') {
-    if (!storeType.value) return '请先选择店铺类型'
-    if (!shopArea.value) return '请先选择营业面积'
-    if (!backArea.value) return '请先选择后厨/仓库面积'
-    if (doorSignNeeds.value.length === 0) return '请先选择门头需求'
-    if (specialDevices.value.length === 0) return '请先选择特殊设备'
-    if (!licenseAssist.value) return '请先选择营业执照协助'
+    if (!shopArea.value) return '请先选择门店营业面积'
   }
 
   if (selectedPlan.value === 'business') {
-    if (!businessSeatArea.value) return '请先选择工位面积'
-    if (!businessOfficeCount.value) return '请先选择独立办公室数量'
-    if (!businessMeetingCount.value) return '请先选择会议室数量'
-    if (businessFuncZones.value.length === 0) return '请先选择功能分区'
-    if (!businessSoundproof.value) return '请先选择隔音处理'
-    if (businessWeakElectrics.value.length === 0) return '请先选择智能化弱电'
-    if (!businessAcType.value) return '请先选择空调系统'
-    if (!businessFurnitureCustomized.value) return '请先选择家具定制'
+    if (!businessSeatArea.value) return '请先选择工程面积'
   }
 
   if (selectedPlan.value === 'residential') {
-    if (!resHomeType.value) return '请先选择房型'
-    if (resKeyAreas.value.length === 0) return '请先选择重点区域'
-    if (!resCabinetMaterial.value) return '请先选择橱柜材质'
-    if (!resIslandNeed.value) return '请先选择岛台需求'
-    if (!resSmartToilet.value) return '请先选择智能马桶需求'
-    if (!resThermostaticShower.value) return '请先选择恒温花洒需求'
-    if (resFloorWall.value.length === 0) return '请先选择地板墙面'
-    if (resStorage.value.length === 0) return '请先选择收纳系统'
-    if (resSmartHome.value.length === 0) return '请先选择家庭智能'
+    if (!resHomeArea.value) return '请先选择房屋面积'
   }
 
   const ln = lastName.value.trim()
@@ -598,7 +713,7 @@ function validateRequired(): string | null {
   return null
 }
 
-function onSubmit() {
+async function onSubmit() {
   errorText.value = ''
   showSuccessModal.value = false
 
@@ -646,12 +761,13 @@ function onSubmit() {
     ...(selectedPlan.value === 'residential'
       ? {
           residential: {
-            resHomeType: resHomeType.value,
+            resHomeArea: resHomeArea.value,
+            resBedroomCount: resBedroomCount.value,
+            resBathroomCount: resBathroomCount.value,
+            resLivingRoomCount: resLivingRoomCount.value,
+            resDiningRoomCount: resDiningRoomCount.value,
             resKeyAreas: resKeyAreas.value,
-            resCabinetMaterial: resCabinetMaterial.value,
             resIslandNeed: resIslandNeed.value,
-            resSmartToilet: resSmartToilet.value,
-            resThermostaticShower: resThermostaticShower.value,
             resFloorWall: resFloorWall.value,
             resStorage: resStorage.value,
             resSmartHome: resSmartHome.value,
@@ -666,12 +782,13 @@ function onSubmit() {
     },
   }
 
-  emit('submit', payload)
-
-  // TODO: 接入后端（暂时不做真实请求）
-  // await fetch('/api/contact/quote', { method:'POST', body: JSON.stringify(payload) })
-
-  showSuccessModal.value = true
+  try {
+    await submitQuoteLead(payload)
+    emit('submit', payload)
+    showSuccessModal.value = true
+  } catch (e) {
+    errorText.value = e instanceof Error ? e.message : '提交失败，请稍后重试'
+  }
 }
 </script>
 
@@ -790,6 +907,88 @@ function onSubmit() {
   color: rgba(0, 0, 0, 0.65);
 }
 
+.contact-quote__label--required::before {
+  content: '* ';
+  color: #c62828;
+  font-weight: 700;
+}
+
+.contact-quote__field--full {
+  grid-column: 1 / -1;
+}
+
+.contact-quote__fold {
+  border-radius: 12px;
+  background: #f1f1f1;
+  overflow: hidden;
+}
+
+.contact-quote__fold-summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+  min-height: 44px;
+  padding: 0.6rem 0.75rem 0.6rem 0.9rem;
+  box-sizing: border-box;
+}
+
+.contact-quote__fold-summary::-webkit-details-marker {
+  display: none;
+}
+
+.contact-quote__fold-hint {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.75);
+  text-align: left;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.contact-quote__fold-arrow {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  margin-top: 0.42rem;
+  border-left: 2px solid rgba(0, 0, 0, 0.55);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.55);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+  pointer-events: none;
+}
+
+.contact-quote__fold[open] > .contact-quote__fold-summary .contact-quote__fold-arrow {
+  margin-top: 0.28rem;
+  transform: rotate(135deg);
+}
+
+.contact-quote__fold-panel {
+  padding: 0 0.9rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.contact-quote__check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.85);
+  cursor: pointer;
+}
+
+.contact-quote__check input {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
 .contact-quote__select {
   position: relative;
 }
@@ -820,19 +1019,6 @@ function onSubmit() {
   pointer-events: none;
 }
 
-.contact-quote__multi {
-  width: 100%;
-  min-height: 120px;
-  border-radius: 12px;
-  border: none;
-  outline: none;
-  padding: 0.75rem 0.9rem;
-  background: #f1f1f1;
-  color: rgba(0, 0, 0, 0.85);
-  font-size: 0.9rem;
-  box-sizing: border-box;
-}
-
 .contact-quote__gender-row {
   display: grid;
   grid-template-columns: 1fr 90px;
@@ -848,8 +1034,10 @@ function onSubmit() {
   background: #f1f1f1;
   color: rgba(0, 0, 0, 0.85);
   font-size: 0.9rem;
-  padding: 0 0.75rem;
+  padding: 0 0.35rem;
   box-sizing: border-box;
+  text-align: center;
+  text-align-last: center;
 }
 
 .contact-quote__surname {
