@@ -95,8 +95,14 @@
 import NavigationBar from '@/components/navigationBar.vue'
 import HomeFooter from '@/components/home/HomeFooter.vue'
 
-import imgA from '@/source/homepage/1/bussiness1.jpg'
-import imgB from '@/source/homepage/1/bussiness3.jpg'
+import bus1a from '@/source/business/b1_1.webp'
+import bus1b from '@/source/business/b1_2.jpeg'
+import bus2a from '@/source/business/b2_1.jpeg'
+import bus2b from '@/source/business/b2_2.jpeg'
+import bus3a from '@/source/business/b3_1.jpeg'
+import bus3b from '@/source/business/b3_2.jpeg'
+import bus4a from '@/source/business/b4_1.jpeg'
+import bus4b from '@/source/business/b4_2.jpeg'
 
 const highlights = [
   {
@@ -131,39 +137,58 @@ const processSteps = [
 const priceBands = [
   {
     label: '标准办公',
-    range: '￥900 - ￥1400 / m²',
+    range: '￥400 - ￥700 / m²',
     hint: '适合中小企业基础升级，优先保证工位效率与会议功能。',
   },
   {
     label: '形象升级',
-    range: '￥1400 - ￥2200 / m²',
+    range: '￥700 - ￥1000 / m²',
     hint: '适合注重品牌展示和员工体验的成长型团队。',
   },
   {
     label: '总部定制',
-    range: '￥2200+ / m²',
+    range: '￥1000+ / m²',
     hint: '适合总部或综合办公空间，强调品牌表达和高品质细节。',
   },
 ] as const
 
+/** 商务办公案例：与 source/business 下 b1～b4 成对图片一一对应 */
 const cases = [
   {
-    title: '科技企业研发办公区',
-    imageA: imgA,
-    imageB: imgB,
-    type: '研发办公',
-    area: '420m²',
-    duration: '工期 58 天',
-    desc: '重构研发与产品协作区，优化会议室与电话间配置，提升跨团队协同效率。',
+    title: '科技服务企业 · 开放办公与协作区',
+    imageA: bus1a,
+    imageB: bus1b,
+    type: '开放办公',
+    area: '约 380㎡',
+    duration: '工期 52 天',
+    desc: '工位区与协作区一体化布局，照明与声学处理兼顾专注与讨论，动线缩短跨部门沟通成本。',
   },
   {
-    title: '品牌总部办公空间',
-    imageA: imgB,
-    imageB: imgA,
+    title: '品牌咨询公司 · 接待与会议空间',
+    imageA: bus2a,
+    imageB: bus2b,
+    type: '形象办公',
+    area: '约 290㎡',
+    duration: '工期 53 天',
+    desc: '前台形象墙与访客串联会议室，材质与灯光统一品牌色，提升客户到访第一印象。',
+  },
+  {
+    title: '区域总部 · 高管办公与茶歇区',
+    imageA: bus3a,
+    imageB: bus3b,
     type: '总部办公',
-    area: '680m²',
-    duration: '工期 76 天',
-    desc: '以企业文化为核心打造接待与展示空间，强化访客体验与品牌记忆点。',
+    area: '约 510㎡',
+    duration: '工期 63 天',
+    desc: '独立办公室与共享茶歇区相邻布置，既保证决策私密性，又便于管理层与团队快速对齐。',
+  },
+  {
+    title: '成长型团队 · 联合办公改造',
+    imageA: bus4a,
+    imageB: bus4b,
+    type: '办公升级',
+    area: '约 220㎡',
+    duration: '工期 44 天',
+    desc: '在有限面积内重构储物与工位比例，增设电话间与站立会议角，满足扩编前弹性使用。',
   },
 ] as const
 </script>
@@ -198,7 +223,8 @@ const cases = [
 .business-highlights { padding: 1.8rem 0 1.2rem; }
 .business-highlights__grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
 .business-highlights__grid .business-section__title { grid-column: 1 / -1; }
-.business-highlight-card { border-radius: 16px; padding: 22px 16px 23px; border: 1px solid rgba(0,0,0,.08); background: #fff; box-shadow: 0 10px 20px rgba(0,0,0,.04); }
+.business-highlight-card { border-radius: 16px; padding: 22px 16px 23px; border: 1px solid rgba(0,0,0,.08); background: #fff; box-shadow: 0 10px 20px rgba(0,0,0,.04); transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
+.business-highlight-card:hover { transform: translateY(-5px); box-shadow: 0 18px 36px rgba(0,0,0,.1); border-color: rgba(0,0,0,.12); }
 .business-highlight-card__title { margin: 0; font-size: 1.04rem; font-weight: 800; }
 .business-highlight-card__text { margin: .55rem 0 0; font-size: .92rem; line-height: 1.65; color: rgba(0,0,0,.74); }
 .business-process { padding: 1.9rem 0 1.4rem; }
@@ -209,7 +235,8 @@ const cases = [
 .business-process-item__desc { margin: .5rem 0 0; font-size: .9rem; line-height: 1.62; color: rgba(0,0,0,.72); }
 .business-pricing { padding: 1.8rem 0 2rem; }
 .business-pricing__grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-top: 1rem; }
-.business-price-card { border-radius: 16px; padding: 22px 16px 23px; background: linear-gradient(180deg, #fff 0%, #f9f9f9 100%); border: 1px solid rgba(0,0,0,.08); }
+.business-price-card { border-radius: 16px; padding: 22px 16px 23px; background: linear-gradient(180deg, #fff 0%, #f9f9f9 100%); border: 1px solid rgba(0,0,0,.08); transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
+.business-price-card:hover { transform: translateY(-5px); box-shadow: 0 18px 36px rgba(0,0,0,.1); border-color: rgba(0,0,0,.12); }
 .business-price-card__label { margin: 0; font-size: .85rem; font-weight: 700; color: rgba(0,0,0,.55); }
 .business-price-card__range { margin: .35rem 0 0; font-size: 1.15rem; font-weight: 900; letter-spacing: -.02em; }
 .business-price-card__hint { margin: .55rem 0 0; font-size: .9rem; line-height: 1.6; color: rgba(0,0,0,.72); }
@@ -241,15 +268,85 @@ const cases = [
   filter: brightness(1.05);
   transform: translateY(-1px);
 }
-@media (max-width: 980px) {
+@media (max-width: 980px) and (min-width: 768px) {
+  .business-highlights__grid,
+  .business-process__list,
+  .business-pricing__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .business-highlights__grid .business-section__title {
+    grid-column: 1 / -1;
+  }
+
+  .business-case-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .business-hero {
+    padding: 2.55rem 0 2.1rem;
+  }
+
+  .business-hero__inner {
+    padding: 1.85rem 1.35rem 2rem;
+  }
+
+  .business-hero__kicker {
+    padding-top: 0.3rem;
+  }
+
+  .business-hero__title {
+    margin-top: 0.9rem;
+  }
+
+  .business-hero__actions {
+    margin-top: 1.7rem;
+  }
+
+  .business-wrap {
+    padding: 0 1.25rem;
+  }
+}
+
+@media (max-width: 767px) {
   .business-highlights__grid,
   .business-process__list,
   .business-pricing__grid,
-  .business-case-grid { grid-template-columns: 1fr; }
-  .business-hero__inner { padding: 1.4rem; }
-  .business-wrap { padding: 0 1rem; }
-  .business-case-card__img { height: 168px; }
-  .business-cta__inner { padding: 1.4rem; }
+  .business-case-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .business-hero {
+    padding: 2.65rem 0 2.2rem;
+  }
+
+  .business-hero__inner {
+    padding: 1.7rem 1.1rem 1.95rem;
+  }
+
+  .business-hero__kicker {
+    padding-top: 0.35rem;
+  }
+
+  .business-hero__title {
+    margin-top: 0.85rem;
+  }
+
+  .business-hero__actions {
+    margin-top: 1.75rem;
+  }
+
+  .business-wrap {
+    padding: 0 1rem;
+  }
+
+  .business-case-card__img {
+    height: 168px;
+  }
+
+  .business-cta__inner {
+    padding: 1.4rem;
+  }
 }
 
 @keyframes section-fade-in {
@@ -269,5 +366,9 @@ const cases = [
     transform: none;
     animation: none;
   }
+  .business-highlight-card,
+  .business-price-card { transition: none; }
+  .business-highlight-card:hover,
+  .business-price-card:hover { transform: none; }
 }
 </style>

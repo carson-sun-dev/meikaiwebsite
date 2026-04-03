@@ -70,7 +70,13 @@ defineProps<{
   gap: 1.25rem;
 }
 
-@media (max-width: 980px) {
+@media (max-width: 980px) and (min-width: 768px) {
+  .contact-unitref__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
   .contact-unitref__grid {
     grid-template-columns: 1fr;
   }

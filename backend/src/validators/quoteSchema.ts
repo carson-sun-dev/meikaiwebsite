@@ -1,6 +1,11 @@
 import { z } from 'zod'
 
 import { validatePhone } from './phone.js'
+import {
+  resFloorWallSchema,
+  specialDevicesSchema,
+  storeTypeSchema,
+} from './quoteOptionKeys.js'
 
 const commonSchema = z.object({
   buildingType: z.string().min(1).max(64),
@@ -30,11 +35,11 @@ const stringArray = (maxLen: number, maxItems: number) =>
 
 const storeSchema = z
   .object({
-    storeType: z.string().max(64).default(''),
+    storeType: storeTypeSchema,
     shopArea: z.string().min(1, '请选择门店面积').max(64),
     backArea: z.string().max(64).default(''),
     doorSignNeeds: stringArray(48, 32),
-    specialDevices: stringArray(48, 32),
+    specialDevices: specialDevicesSchema,
     licenseAssist: z.string().max(64).default(''),
   })
   .strict()
@@ -61,37 +66,47 @@ const residentialSchema = z
     resDiningRoomCount: z.string().max(32).default(''),
     resKeyAreas: stringArray(48, 32),
     resIslandNeed: z.string().max(32).default(''),
-    resFloorWall: stringArray(48, 32),
+    resFloorWall: resFloorWallSchema,
     resStorage: stringArray(48, 32),
     resSmartHome: stringArray(48, 32),
   })
   .strict()
 
-export const quotePayloadSchema = z.discriminatedUnion('planKey', [
-  z
-    .object({
-      planKey: z.literal('store'),
-      common: commonSchema,
-      store: storeSchema,
-      contact: contactSchema,
-    })
-    .strict(),
-  z
-    .object({
-      planKey: z.literal('business'),
-      common: commonSchema,
-      business: businessSchema,
-      contact: contactSchema,
-    })
-    .strict(),
-  z
-    .object({
-      planKey: z.literal('residential'),
-      common: commonSchema,
-      residential: residentialSchema,
-      contact: contactSchema,
-    })
-    .strict(),
-])
+export const quotePayloadSchema = z
+  .discriminatedUnion('planKey', [
+    z
+      .object({
+        planKey: z.literal('store'),
+        common: commonSchema,
+        store: storeSchema,
+        contact: contactSchema,
+      })
+      .strict(),
+    z
+      .object({
+        planKey: z.literal('business'),
+        common: commonSchema,
+        business: businessSchema,
+        contact: contactSchema,
+      })
+      .strict(),
+    z
+      .object({
+        planKey: z.literal('residential'),
+        common: commonSchema,
+        residential: residentialSchema,
+        contact: contactSchema,
+      })
+      .strict(),
+  ])
+  .superRefine((val, ctx) => {
+    if (val.planKey === 'store' && (!val.store.storeType || val.store.storeType.trim() === '')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['store', 'storeType'],
+        message: '请选择店铺类型',
+      })
+    }
+  })
 
 export type QuotePayload = z.infer<typeof quotePayloadSchema>

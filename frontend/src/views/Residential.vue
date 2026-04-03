@@ -95,8 +95,18 @@
 import NavigationBar from '@/components/navigationBar.vue'
 import HomeFooter from '@/components/home/HomeFooter.vue'
 
-import imgA from '@/source/homepage/1/home1.jpg'
-import imgB from '@/source/homepage/1/home2.jpg'
+import h1a from '@/source/house/1_1.jpg'
+import h1b from '@/source/house/1_2.jpg'
+import h2a from '@/source/house/2_1.jpg'
+import h2b from '@/source/house/2_2.jpg'
+import h3a from '@/source/house/3_1.jpg'
+import h3b from '@/source/house/3_2.jpg'
+import h4a from '@/source/house/4_1.jpg'
+import h4b from '@/source/house/4_2.jpg'
+import h5a from '@/source/house/5_1.jpg'
+import h5b from '@/source/house/5_2.jpg'
+import h6a from '@/source/house/6_1.jpg'
+import h6b from '@/source/house/6_2.jpg'
 
 const highlights = [
   {
@@ -131,39 +141,76 @@ const processSteps = [
 const priceBands = [
   {
     label: '舒适基础',
-    range: '￥900 - ￥1400 / m²',
+    range: '￥500 / m²',
     hint: '适合刚需改善型家庭，注重实用与基础质感升级。',
   },
   {
     label: '品质进阶',
-    range: '￥1400 - ￥2200 / m²',
+    range: '￥700 / m²',
     hint: '适合对风格统一和细节工艺有要求的家庭。',
   },
   {
     label: '高端定制',
-    range: '￥2200+ / m²',
+    range: '￥900+ / m²',
     hint: '适合大宅及定制需求，强调整体体验与长期耐用性。',
   },
 ] as const
 
+/** 精品家装案例：与 source/house 下 1～6 组图片一一对应 */
 const cases = [
   {
-    title: '现代轻奢三居',
-    imageA: imgA,
-    imageB: imgB,
-    type: '三居改造',
-    area: '138m²',
-    duration: '工期 62 天',
-    desc: '通过客餐厨一体化和收纳分层设计，显著提升公共空间利用率和家庭互动体验。',
+    title: '现代轻奢 · 一体化设计',
+    imageA: h1a,
+    imageB: h1b,
+    type: '平层三居',
+    area: '约 96㎡',
+    duration: '工期 58 天',
+    desc: '打通客餐厅与厨房视线，全屋灯光分层营造温馨而不浮夸的轻奢质感。',
   },
   {
-    title: '奶油风改善型住宅',
-    imageA: imgB,
-    imageB: imgA,
-    type: '改善型住宅',
-    area: '165m²',
-    duration: '工期 74 天',
-    desc: '围绕材质与灯光做统一表达，兼顾颜值、舒适度与后期维护便利性。',
+    title: '极简原木 · 亲子家庭',
+    imageA: h2a,
+    imageB: h2b,
+    type: '居住改善',
+    area: '约 106㎡',
+    duration: '工期 71 天',
+    desc: '以木色与留白为主调，儿童房与书房动静分区，收纳嵌入墙体，方便孩子成长阶段调整。',
+  },
+  {
+    title: '奶油风 · 清新简单',
+    imageA: h3a,
+    imageB: h3b,
+    type: '两居新房',
+    area: '约 96㎡',
+    duration: '工期 64 天',
+    desc: '圆弧收口与柔和色系统一全屋，小户型通过镜面与灯光拉伸视觉，兼顾收纳与颜值。',
+  },
+  {
+    title: '台式简约 · 主卧套间',
+    imageA: h4a,
+    imageB: h4b,
+    type: '套房改造',
+    area: '约 112㎡',
+    duration: '工期 72 天',
+    desc: '主卧与衣帽、梳妆台合并，床品区与阅读角互不干扰，睡眠区遮光与声学细节到位。',
+  },
+  {
+    title: '绿色空间 · 会客与茶区',
+    imageA: h5a,
+    imageB: h5b,
+    type: '大平层',
+    area: '约 80㎡',
+    duration: '工期 66 天',
+    desc: '客厅与茶室轴线呼应，木饰面与石材比例克制，适合多代同堂与家庭聚会场景。',
+  },
+  {
+    title: '现代混搭 · 老房翻新',
+    imageA: h6a,
+    imageB: h6b,
+    type: '旧房全改',
+    area: '约 100㎡',
+    duration: '工期 76 天',
+    desc: '在原有结构上优化厨卫与管线，复古花砖与定制柜体混搭，控制预算的同时提升居住舒适度。',
   },
 ] as const
 </script>
@@ -198,7 +245,8 @@ const cases = [
 .res-highlights { padding: 1.8rem 0 1.2rem; }
 .res-highlights__grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
 .res-highlights__grid .res-section__title { grid-column: 1 / -1; }
-.res-highlight-card { border-radius: 16px; padding: 22px 16px 23px; border: 1px solid rgba(0,0,0,.08); background: #fff; box-shadow: 0 10px 20px rgba(0,0,0,.04); }
+.res-highlight-card { border-radius: 16px; padding: 22px 16px 23px; border: 1px solid rgba(0,0,0,.08); background: #fff; box-shadow: 0 10px 20px rgba(0,0,0,.04); transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
+.res-highlight-card:hover { transform: translateY(-5px); box-shadow: 0 18px 36px rgba(0,0,0,.1); border-color: rgba(0,0,0,.12); }
 .res-highlight-card__title { margin: 0; font-size: 1.04rem; font-weight: 800; }
 .res-highlight-card__text { margin: .55rem 0 0; font-size: .92rem; line-height: 1.65; color: rgba(0,0,0,.74); }
 .res-process { padding: 1.9rem 0 1.4rem; }
@@ -209,7 +257,8 @@ const cases = [
 .res-process-item__desc { margin: .5rem 0 0; font-size: .9rem; line-height: 1.62; color: rgba(0,0,0,.72); }
 .res-pricing { padding: 1.8rem 0 2rem; }
 .res-pricing__grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-top: 1rem; }
-.res-price-card { border-radius: 16px; padding: 22px 16px 23px; background: linear-gradient(180deg, #fff 0%, #f9f9f9 100%); border: 1px solid rgba(0,0,0,.08); }
+.res-price-card { border-radius: 16px; padding: 22px 16px 23px; background: linear-gradient(180deg, #fff 0%, #f9f9f9 100%); border: 1px solid rgba(0,0,0,.08); transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
+.res-price-card:hover { transform: translateY(-5px); box-shadow: 0 18px 36px rgba(0,0,0,.1); border-color: rgba(0,0,0,.12); }
 .res-price-card__label { margin: 0; font-size: .85rem; font-weight: 700; color: rgba(0,0,0,.55); }
 .res-price-card__range { margin: .35rem 0 0; font-size: 1.15rem; font-weight: 900; letter-spacing: -.02em; }
 .res-price-card__hint { margin: .55rem 0 0; font-size: .9rem; line-height: 1.6; color: rgba(0,0,0,.72); }
@@ -241,15 +290,85 @@ const cases = [
   filter: brightness(1.05);
   transform: translateY(-1px);
 }
-@media (max-width: 980px) {
+@media (max-width: 980px) and (min-width: 768px) {
+  .res-highlights__grid,
+  .res-process__list,
+  .res-pricing__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .res-highlights__grid .res-section__title {
+    grid-column: 1 / -1;
+  }
+
+  .res-case-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .res-hero {
+    padding: 2.55rem 0 2.1rem;
+  }
+
+  .res-hero__inner {
+    padding: 1.85rem 1.35rem 2rem;
+  }
+
+  .res-hero__kicker {
+    padding-top: 0.3rem;
+  }
+
+  .res-hero__title {
+    margin-top: 0.9rem;
+  }
+
+  .res-hero__actions {
+    margin-top: 1.7rem;
+  }
+
+  .res-wrap {
+    padding: 0 1.25rem;
+  }
+}
+
+@media (max-width: 767px) {
   .res-highlights__grid,
   .res-process__list,
   .res-pricing__grid,
-  .res-case-grid { grid-template-columns: 1fr; }
-  .res-hero__inner { padding: 1.4rem; }
-  .res-wrap { padding: 0 1rem; }
-  .res-case-card__img { height: 168px; }
-  .res-cta__inner { padding: 1.4rem; }
+  .res-case-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .res-hero {
+    padding: 2.65rem 0 2.2rem;
+  }
+
+  .res-hero__inner {
+    padding: 1.7rem 1.1rem 1.95rem;
+  }
+
+  .res-hero__kicker {
+    padding-top: 0.35rem;
+  }
+
+  .res-hero__title {
+    margin-top: 0.85rem;
+  }
+
+  .res-hero__actions {
+    margin-top: 1.75rem;
+  }
+
+  .res-wrap {
+    padding: 0 1rem;
+  }
+
+  .res-case-card__img {
+    height: 168px;
+  }
+
+  .res-cta__inner {
+    padding: 1.4rem;
+  }
 }
 
 @keyframes section-fade-in {
@@ -269,5 +388,9 @@ const cases = [
     transform: none;
     animation: none;
   }
+  .res-highlight-card,
+  .res-price-card { transition: none; }
+  .res-highlight-card:hover,
+  .res-price-card:hover { transform: none; }
 }
 </style>

@@ -1,0 +1,2 @@
+# 当前生效的边缘配置（由 edge.http.conf / edge.ssl.conf 复制而来）
+edge.active.conf

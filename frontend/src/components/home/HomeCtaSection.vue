@@ -8,7 +8,7 @@
       <div class="home-date-cta__inner">
         <div class="home-date-cta__text">
           <h2 class="home-date-cta__title">请让我们了解您的需求：</h2>
-          <h3 class="home-date-cta__subtitle">2026 工程排期已开启，先到先得！</h3>
+          <h3 class="home-date-cta__subtitle">{{ scheduleYear }} 工程排期已开启，先到先得！</h3>
           <button type="button" class="home-date-cta__action" @click="onQuoteClick">
             <PaperPlaneIcon class="home-date-cta__icon" />
             <span class="home-date-cta__action-label">一键估价</span>
@@ -22,6 +22,9 @@
 <script setup lang="ts">
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon.vue'
 import bgImg from '@/source/homepage/4/1.jpg'
+import { getCurrentYear } from '@/utils/companyTimeline'
+
+const scheduleYear = getCurrentYear()
 
 const emit = defineEmits<{
   quoteClick: []
@@ -160,5 +163,26 @@ function onQuoteClick() {
   line-height: normal;
   white-space: nowrap;
   color: #fff;
+}
+
+@media (max-width: 767px) {
+  .home-date-cta-wrap {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    padding-inline: 1rem;
+  }
+
+  .home-date-cta {
+    min-height: 28rem;
+    border-radius: 16px;
+  }
+
+  .home-date-cta__inner {
+    padding: 1.5rem 1.15rem 2.25rem;
+  }
+
+  .home-date-cta__text {
+    gap: 1.25rem;
+  }
 }
 </style>

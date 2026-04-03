@@ -32,7 +32,7 @@
   background: #fff;
   padding-top: 3.5rem;
   padding-bottom: 4rem;
-  padding-inline: max(1.5rem, calc((100vw - 67.5rem) / 2));
+  padding-inline: max(1rem, calc((100vw - 67.5rem) / 2));
   box-sizing: border-box;
 }
 
@@ -40,6 +40,7 @@
   .home-business {
     padding-top: 4rem;
     padding-bottom: 4.5rem;
+    padding-inline: max(1.5rem, calc((100vw - 67.5rem) / 2));
   }
 }
 

@@ -9,11 +9,12 @@
 /* Accordion section */
 .home-why {
   background: #fafafa;
-  padding: 5rem 1.5rem;
+  padding: 3.5rem 1rem;
 }
 
 @media (min-width: 768px) {
   .home-why {
+    padding: 5rem 1.5rem;
     padding-top: 6rem;
     padding-bottom: 6rem;
   }
@@ -23,11 +24,18 @@
   max-width: 900px;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 @media (min-width: 768px) {
+  .home-why__inner {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
   .home-why__inner {
     padding-left: 2rem;
     padding-right: 2rem;
@@ -48,6 +56,12 @@
   color: #171717;
   font-feature-settings: 'lnum' 1, 'tnum' 1;
   white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .home-why__title {
+    white-space: normal;
+  }
 }
 
 .home-why__promise {
@@ -82,8 +96,20 @@
   background: #fff;
   padding-top: 4rem;
   padding-bottom: 4.5rem;
-  padding-inline: max(1.5rem, calc((100vw - 67.5rem) / 2));
+  padding-inline: max(1rem, calc((100vw - 67.5rem) / 2));
   box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+  .home-gallery {
+    gap: 2rem;
+    padding-top: 2.75rem;
+    padding-bottom: 3rem;
+  }
+
+  .home-gallery__text-block {
+    padding: 1.5rem 1.25rem;
+  }
 }
 
 .home-gallery__stack {

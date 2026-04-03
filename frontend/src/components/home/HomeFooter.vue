@@ -2,24 +2,34 @@
   <div class="home-footer-shell">
     <footer class="home-footer">
       <div class="home-footer__inner">
-        <div>
+        <div class="home-footer__contact-block">
           <h2 class="home-footer__contact-title">保持联系</h2>
           <form class="home-footer__email-row" @submit.prevent="onSubmitPhone">
             <input
               v-model="phone"
               type="tel"
               name="footer-phone"
+              maxlength="32"
               autocomplete="tel"
               placeholder="请输入您的电话"
               class="home-footer__email-input"
               aria-label="联系电话"
+              :disabled="footerSubmitting"
             />
-            <button type="submit" class="home-footer__email-submit" aria-label="提交电话">
+            <button
+              type="submit"
+              class="home-footer__email-submit"
+              aria-label="提交电话"
+              :disabled="footerSubmitting"
+            >
               <PaperPlaneIcon class="home-footer__submit-icon" />
             </button>
           </form>
           <p v-if="footerError" class="home-footer__error" role="alert">{{ footerError }}</p>
           <p class="home-footer__contact-hint">我们的总工程师将尽快联系您，为您排忧。</p>
+          <div class="home-footer__wechat-wrap">
+            <img :src="wechatQrImg" alt="微信扫码联系" class="home-footer__wechat-qr" width="88" height="88" loading="lazy" />
+          </div>
         </div>
 
         <div class="home-footer__bottom">
@@ -48,7 +58,7 @@
         </div>
 
         <div class="home-footer__legal" role="contentinfo" aria-label="网站备案与版权信息">
-          <span class="home-footer__legal-text">© 2026 美恺装饰版权所有</span>
+          <span class="home-footer__legal-text">© {{ currentYear }} 美恺装饰版权所有</span>
           <span class="home-footer__legal-sep" aria-hidden="true">|</span>
           <a
             class="home-footer__legal-link"
@@ -56,10 +66,17 @@
             target="_blank"
             rel="noopener noreferrer"
           >
-            豫ICP备12345678号-1
+          豫ICP备2026012727号
           </a>
           <span class="home-footer__legal-sep" aria-hidden="true">|</span>
-          <span class="home-footer__legal-text">豫公网安备 11010502XXXXXX号</span>
+          <a
+            class="home-footer__legal-link"
+            href="https://beian.mps.gov.cn/#/query/webSearch?recordcode=11010502000000"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            豫公网安备 （暂时占位）XXXXXX号
+          </a>
           <span class="home-footer__legal-sep home-footer__legal-sep--fullwidth" aria-hidden="true">｜</span>
           <a
             class="home-footer__legal-link"
@@ -99,13 +116,19 @@ import { submitFooterPhone } from '@/api/leads'
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon.vue'
 import logoImg from '@/source/logo/logo.png'
 import ziImg from '@/source/logo/zi.png'
+import wechatQrImg from '@/source/wechat.png'
 import { validatePhone } from '@/utils/phoneValidation'
+import { getCurrentYear } from '@/utils/companyTimeline'
+
+const currentYear = getCurrentYear()
 
 const phone = ref('')
 const footerError = ref('')
 const showSuccessModal = ref(false)
+const footerSubmitting = ref(false)
 
 async function onSubmitPhone() {
+  if (footerSubmitting.value) return
   footerError.value = ''
   showSuccessModal.value = false
 
@@ -119,12 +142,15 @@ async function onSubmitPhone() {
     return
   }
 
+  footerSubmitting.value = true
   try {
     await submitFooterPhone(raw)
     showSuccessModal.value = true
     phone.value = ''
   } catch (e) {
     footerError.value = e instanceof Error ? e.message : '提交失败，请稍后重试'
+  } finally {
+    footerSubmitting.value = false
   }
 }
 </script>
@@ -132,8 +158,14 @@ async function onSubmitPhone() {
 <style scoped>
 /* 与 Gallery / CTA 同宽对齐的左右留白 */
 .home-footer-shell {
-  padding-inline: max(1.5rem, calc((100vw - 67.5rem) / 2));
+  padding-inline: max(1rem, calc((100vw - 67.5rem) / 2));
   box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .home-footer-shell {
+    padding-inline: max(1.5rem, calc((100vw - 67.5rem) / 2));
+  }
 }
 
 .home-footer {
@@ -166,6 +198,10 @@ async function onSubmitPhone() {
   }
 }
 
+.home-footer__contact-block {
+  position: relative;
+}
+
 .home-footer__contact-title {
   margin: 0;
   text-align: center;
@@ -173,6 +209,38 @@ async function onSubmitPhone() {
   font-weight: 600;
   line-height: 1.15;
   letter-spacing: -0.02em;
+}
+
+/* 与输入框（max-width 28rem）右缘对齐留白，absolute 不参与居中计算 */
+.home-footer__wechat-wrap {
+  position: absolute;
+  left: calc(50% + 14rem + 0.75rem);
+  /* 与 max-width 28rem 的输入条垂直居中对齐（标题 + 1.75rem margin 后取行高一半） */
+  top: 7.05rem;
+  width: 5.25rem;
+  height: 5.25rem;
+  transform: translateY(-50%);
+}
+
+.home-footer__wechat-qr {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.35rem;
+  object-fit: contain;
+  background: #fff;
+}
+
+@media (max-width: 767px) {
+  .home-footer__wechat-wrap {
+    position: static;
+    left: auto;
+    top: auto;
+    width: 5.25rem;
+    height: 5.25rem;
+    margin: 1.25rem auto 0;
+    transform: none;
+  }
 }
 
 .home-footer__contact-hint {
@@ -233,6 +301,11 @@ async function onSubmitPhone() {
   color: #000;
   cursor: pointer;
   line-height: 0;
+}
+
+.home-footer__email-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .home-footer__submit-icon {

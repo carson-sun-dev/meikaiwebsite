@@ -24,7 +24,7 @@
           <div class="about-wrap">
             <div class="about-metrics__grid">
               <article class="about-metric">
-                <div class="about-metric__value">7年+</div>
+                <div class="about-metric__value">{{ metricYearsPlus }}</div>
                 <div class="about-metric__label">河南本地深耕经验</div>
               </article>
               <article class="about-metric">
@@ -52,7 +52,7 @@
 
               <div class="about-intro__main">
                 <div class="about-intro__block">
-                  <div class="about-intro__h">深耕中原七载，匠心筑造品质标杆</div>
+                  <div class="about-intro__h">深耕中原{{ deepRootZai }}，匠心筑造品质标杆</div>
                   <ul class="about-intro__list">
                     <li>始于 2017 年，聚焦店铺、商务办公、精品家装三大场景。</li>
                     <li>以郑州为核心，服务覆盖洛阳、开封、驻马店等河南多地。</li>
@@ -63,7 +63,7 @@
                 <div class="about-intro__block">
                   <div class="about-intro__h">三十年工程积淀，全球直供正品保障</div>
                   <ul class="about-intro__list">
-                    <li>总工程师团队具备 <span class="about-intro__em">20</span> 年以上施工与管理经验。</li>
+                    <li>总工程师团队具备 <span class="about-intro__em">30</span> 年以上施工与管理经验。</li>
                     <li>采用一对一深度对接机制，确保关键节点沟通透明。</li>
                     <li>与立邦、多乐士、三棵树、诺贝尔、公牛、老板等品牌合作，保障正品与环保标准。</li>
                   </ul>
@@ -157,9 +157,13 @@ import HomeFooter from '@/components/home/HomeFooter.vue'
 import HomeSectionFade from '@/components/home/HomeSectionFade.vue'
 
 import heroImg from '@/source/about/1.jpg'
-import m1 from '@/source/homepage/2/1.jpg'
-import m2 from '@/source/homepage/2/2.jpg'
-import m3 from '@/source/homepage/2/3.jpg'
+import m1 from '@/source/about/2/1.jpg'
+import m2 from '@/source/about/2/2.jpg'
+import m3 from '@/source/about/2/3.jpg'
+import { getMetricYearsPlus, getZhYearsZaiPhrase } from '@/utils/companyTimeline'
+
+const metricYearsPlus = getMetricYearsPlus()
+const deepRootZai = getZhYearsZaiPhrase()
 </script>
 
 <style scoped>
@@ -264,6 +268,16 @@ import m3 from '@/source/homepage/2/3.jpg'
   border: 1px solid rgba(0, 0, 0, 0.08);
   background: linear-gradient(180deg, #fff 0%, #f9f9f9 100%);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.05);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.about-metric:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 .about-metric__value {
@@ -457,6 +471,20 @@ import m3 from '@/source/homepage/2/3.jpg'
   gap: 18px;
   padding: 18px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.timeline-item__card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.timeline-item__card:hover .timeline-item__img {
+  transform: scale(1.03);
 }
 
 .timeline-item__content {
@@ -491,6 +519,22 @@ import m3 from '@/source/homepage/2/3.jpg'
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 0.35s ease;
+}
+
+@media (max-width: 767px) {
+  .about-hero {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .about-hero__content {
+    padding: 4.5rem 1.15rem 2.5rem;
+  }
+
+  .about-wrap {
+    padding: 0 1.15rem;
+  }
 }
 
 @media (max-width: 980px) {
@@ -541,6 +585,26 @@ import m3 from '@/source/homepage/2/3.jpg'
 @media (max-width: 640px) {
   .about-metrics__grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-metric,
+  .timeline-item__card {
+    transition: none;
+  }
+
+  .about-metric:hover,
+  .timeline-item__card:hover {
+    transform: none;
+  }
+
+  .timeline-item__img {
+    transition: none;
+  }
+
+  .timeline-item__card:hover .timeline-item__img {
+    transform: none;
   }
 }
 

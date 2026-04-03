@@ -1,0 +1,118 @@
+# 生产环境（腾讯云等）：边缘 Nginx 终止 SSL，web 仅内网，MySQL 不映射宿主机端口
+# 使用：见 deploy/TENCENT_CLOUD.md
+# 首次部署前：cp edge.http.conf edge.active.conf
+
+name: meikai
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=256M
+      - --max-connections=80
+      - --performance-schema=OFF
+      - --table-open-cache=200
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-meikai}
+      MYSQL_USER: ${MYSQL_USER:-meikai}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD || exit 1',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 16
+      start_period: 30s
+    expose:
+      - '3306'
+    networks:
+      - internal
+
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: 3001
+      NODE_ENV: production
+      DATABASE_HOST: mysql
+      DATABASE_PORT: 3306
+      DATABASE_USER: ${MYSQL_USER:-meikai}
+      DATABASE_PASSWORD: ${MYSQL_PASSWORD}
+      DATABASE_NAME: ${MYSQL_DATABASE:-meikai}
+      CORS_ORIGINS: ${CORS_ORIGINS:?set CORS_ORIGINS}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    expose:
+      - '3001'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "node -e \"fetch('http://127.0.0.1:3001/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 20s
+      timeout: 8s
+      retries: 5
+      start_period: 50s
+    networks:
+      - internal
+
+  web:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE: ''
+        VITE_SITE_ORIGIN: ${VITE_SITE_ORIGIN:-https://www.meikaizs.com}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    expose:
+      - '80'
+    networks:
+      - internal
+
+  nginx-proxy:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./edge.active.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot-etc:/etc/letsencrypt:ro
+      - certbot-www:/var/www/certbot:ro
+    depends_on:
+      - web
+    networks:
+      - internal
+
+  # 仅用于 one-shot：docker compose --profile tools run --rm certbot certonly ...
+  certbot:
+    image: certbot/certbot:latest
+    profiles:
+      - tools
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+
+volumes:
+  mysql_data:
+  certbot-etc:
+  certbot-www:
+
+networks:
+  internal:

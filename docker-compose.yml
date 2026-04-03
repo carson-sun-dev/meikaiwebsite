@@ -1,3 +1,5 @@
+# 本地开发。生产上线（HTTPS / 腾讯云）见 deploy/docker-compose.prod.yml 与 deploy/TENCENT_CLOUD.md
+
 services:
   mysql:
     image: mysql:8.0
@@ -19,8 +21,8 @@ services:
       timeout: 5s
       retries: 16
       start_period: 30s
-      ports:
-    - "127.0.0.1:3306:3306"
+    ports:
+      - '127.0.0.1:3306:3306'
 
   backend:
     build: ./backend
@@ -46,6 +48,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE: ''
+        VITE_SITE_ORIGIN: ${VITE_SITE_ORIGIN:-https://www.meikaizs.com}
     restart: unless-stopped
     ports:
       - '${WEB_PORT:-8080}:80'

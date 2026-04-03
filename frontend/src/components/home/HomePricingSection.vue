@@ -59,6 +59,12 @@ function getPlanDetailRoute(title: string) {
   padding: 5rem 1.5rem;
 }
 
+@media (max-width: 767px) {
+  .home-pricing {
+    padding: 3.25rem 1rem;
+  }
+}
+
 @media (min-width: 768px) {
   .home-pricing {
     padding-top: 6rem;
@@ -70,11 +76,18 @@ function getPlanDetailRoute(title: string) {
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 @media (min-width: 768px) {
+  .home-pricing__inner {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
   .home-pricing__inner {
     padding-left: 2rem;
     padding-right: 2rem;
@@ -105,9 +118,24 @@ function getPlanDetailRoute(title: string) {
   display: flex;
   flex-direction: column;
   border-radius: 1rem;
+  border: 1px solid transparent;
   background: rgba(245, 245, 245, 0.9);
   padding: 2rem;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition:
+    transform 0.28s ease,
+    box-shadow 0.28s ease,
+    background-color 0.28s ease,
+    border-color 0.28s ease;
+}
+
+.home-price-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(0, 0, 0, 0.06);
+  background: #fff;
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.08),
+    0 4px 10px rgba(0, 0, 0, 0.04);
 }
 
 .home-price-card__title {
@@ -161,6 +189,32 @@ function getPlanDetailRoute(title: string) {
   text-decoration: none;
   background: #171717;
   color: #fff;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.home-price-card__btn:hover {
+  background: #333;
+  transform: translateY(-1px);
+}
+
+.home-price-card__btn:focus-visible {
+  outline: 2px solid #171717;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-price-card,
+  .home-price-card__btn {
+    transition: none;
+  }
+
+  .home-price-card:hover {
+    transform: none;
+  }
+
+  .home-price-card__btn:hover {
+    transform: none;
+  }
 }
 
 .home-pricing__note {

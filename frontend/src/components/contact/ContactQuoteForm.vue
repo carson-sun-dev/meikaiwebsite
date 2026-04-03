@@ -61,14 +61,17 @@
           <div class="contact-quote__section-title contact-quote__section-title--tight">工程细节</div>
           <div class="contact-quote__grid">
             <div class="contact-quote__field">
-              <label class="contact-quote__label" for="store-type">店铺类型（餐饮、零售等）</label>
+              <label class="contact-quote__label contact-quote__label--required" for="store-type">
+                店铺类型（餐饮、零售等）
+              </label>
               <div class="contact-quote__select">
-                <select id="store-type" v-model="storeType" aria-label="店铺类型">
+                <select id="store-type" v-model="storeType" aria-label="店铺类型" aria-required="true">
                   <option disabled value="">请选择</option>
                   <option value="food">餐饮</option>
                   <option value="retail">品牌零售</option>
                   <option value="entertainment">娱乐（酒吧/KTV/密室逃脱等）</option>
                   <option value="fitness">健身房</option>
+                  <option value="milk-tea">奶茶店</option>
                   <option value="other">其他</option>
                 </select>
                 <span class="contact-quote__select-arrow" aria-hidden="true" />
@@ -431,15 +434,15 @@
           <div class="contact-quote__field contact-quote__field--gender">
             <label class="contact-quote__label contact-quote__label--required" for="gender">请告诉我们如何称呼您？</label>
             <div class="contact-quote__gender-row">
-              <input
-                v-model="lastName"
-                class="contact-quote__surname"
-                type="text"
-                maxlength="4"
-                placeholder="请输入您的姓氏"
-                aria-label="姓氏"
-                aria-required="true"
-              />
+            <input
+              v-model="lastName"
+              class="contact-quote__surname"
+              type="text"
+              maxlength="4"
+              placeholder="请输入您的姓氏"
+              aria-label="姓氏"
+              aria-required="true"
+            />
 
               <select id="gender" v-model="gender" aria-label="称呼" class="contact-quote__gender">
                 <option value="mr">先生</option>
@@ -455,6 +458,8 @@
               v-model="phone"
               class="contact-quote__phone"
               type="tel"
+              maxlength="32"
+              autocomplete="tel"
               placeholder="请输入您的联系电话"
               aria-label="联系电话"
               aria-required="true"
@@ -469,15 +474,16 @@
             v-model="remark"
             class="contact-quote__remark"
             rows="4"
+            maxlength="4000"
             placeholder="请输入你的备注（可选）"
             aria-label="备注栏"
           />
         </div>
 
         <div class="contact-quote__actions">
-          <button type="submit" class="contact-quote__submit">
+          <button type="submit" class="contact-quote__submit" :disabled="submitting">
             <PaperPlaneIcon class="contact-quote__submit-icon" />
-            <span class="contact-quote__submit-text">获取报价</span>
+            <span class="contact-quote__submit-text">{{ submitting ? '提交中…' : '获取报价' }}</span>
           </button>
         </div>
 
@@ -575,6 +581,7 @@ const specialDeviceOptions: MultiOpt[] = [
   { value: 'water-elec', label: '水电改造' },
   { value: 'ac', label: '空调' },
   { value: 'cctv', label: '监控' },
+  { value: 'fire-safety', label: '消防（喷淋、安全出口、灭火器）' },
   { value: 'other', label: '其他' },
 ]
 
@@ -594,17 +601,11 @@ const businessWeakElectricOptions: MultiOpt[] = [
   { value: 'other', label: '其他' },
 ]
 
-const resKeyAreaOptions: MultiOpt[] = [
-  { value: 'whole', label: '全屋翻新' },
-  { value: 'kitchen', label: '厨房改造' },
-  { value: 'bathroom', label: '卫生间翻新' },
-  { value: 'basement', label: '地下室装修' },
-  { value: 'other', label: '其他' },
-]
 
 const resFloorWallOptions: MultiOpt[] = [
   { value: 'wood-floor', label: '实木地板' },
   { value: 'composite-floor', label: '复合地板' },
+  { value: 'tile', label: '瓷砖' },
   { value: 'panel', label: '护墙板定制' },
   { value: 'art-paint', label: '艺术漆' },
   { value: 'wallpaper', label: '壁纸' },
@@ -673,6 +674,7 @@ const remark = ref('')
 
 const errorText = ref('')
 const showSuccessModal = ref(false)
+const submitting = ref(false)
 
 const planList = computed(() => [
   {
@@ -694,6 +696,7 @@ function validateRequired(): string | null {
   if (!schedule.value) return '请先选择预计工期'
 
   if (selectedPlan.value === 'store') {
+    if (!storeType.value) return '请先选择店铺类型'
     if (!shopArea.value) return '请先选择门店营业面积'
   }
 
@@ -714,6 +717,7 @@ function validateRequired(): string | null {
 }
 
 async function onSubmit() {
+  if (submitting.value) return
   errorText.value = ''
   showSuccessModal.value = false
 
@@ -782,12 +786,15 @@ async function onSubmit() {
     },
   }
 
+  submitting.value = true
   try {
     await submitQuoteLead(payload)
     emit('submit', payload)
     showSuccessModal.value = true
   } catch (e) {
     errorText.value = e instanceof Error ? e.message : '提交失败，请稍后重试'
+  } finally {
+    submitting.value = false
   }
 }
 </script>
@@ -800,11 +807,17 @@ async function onSubmit() {
 
 .contact-quote__wrap {
   width: 100%;
-  max-width: 1080px;
+  max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
   padding: 0 1.5rem;
   box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .contact-quote__wrap {
+    padding: 0 1rem;
+  }
 }
 
 .contact-quote__title {
@@ -821,7 +834,7 @@ async function onSubmit() {
   gap: 1.25rem;
 }
 
-@media (max-width: 980px) {
+@media (max-width: 767px) {
   .contact-quote__plans {
     grid-template-columns: 1fr;
   }
@@ -886,11 +899,15 @@ async function onSubmit() {
   grid-template-columns: 1fr 1fr;
 }
 
-@media (max-width: 980px) {
+/* 平板：表单双列；手机：单列 */
+@media (max-width: 980px) and (min-width: 768px) {
   .contact-quote__grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
 
+@media (max-width: 767px) {
+  .contact-quote__grid,
   .contact-quote__grid--contact {
     grid-template-columns: 1fr;
   }
@@ -1119,6 +1136,11 @@ async function onSubmit() {
   color: #fff;
   cursor: pointer;
   padding: 0 1.3rem;
+}
+
+.contact-quote__submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .contact-quote__submit-icon {

@@ -5,6 +5,14 @@
   --color-brand: #c41e3a;
 }
 
+/* 全站断点约定：手机 ≤767、平板 768–980、桌面 ≥981（与各页 max-width: 980px 对齐） */
 html {
   font-family: var(--font-sans);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  overflow-x: clip;
 }

@@ -13,6 +13,9 @@ COPY . .
 ARG VITE_API_BASE=
 ENV VITE_API_BASE=$VITE_API_BASE
 
+ARG VITE_SITE_ORIGIN=https://www.meikaizs.com
+ENV VITE_SITE_ORIGIN=$VITE_SITE_ORIGIN
+
 # 直接 vite build：避免 run-p / vue-tsc --build 在容器里对 workspace 解析踩坑
 RUN pnpm exec vite build
 

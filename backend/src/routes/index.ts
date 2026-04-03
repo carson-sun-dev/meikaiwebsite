@@ -9,6 +9,9 @@ export function createApiRouter(db: Db) {
 
   api.use(healthRouter)
   api.use('/leads', createLeadsRouter(db))
+  api.use((_req, res) => {
+    res.status(404).json({ error: 'not_found', message: '接口不存在' })
+  })
 
   return api
 }

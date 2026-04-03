@@ -9,6 +9,11 @@ import { createApiRouter } from './routes/index.js'
 export function createApp(db: Db) {
   const app = express()
 
+  // 经 Docker / Nginx 反代时正确解析客户端 IP（req.ip、日志等）
+  if (env.nodeEnv === 'production') {
+    app.set('trust proxy', 1)
+  }
+
   app.use(
     cors({
       origin: env.corsOrigins,

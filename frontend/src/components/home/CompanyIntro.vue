@@ -29,8 +29,8 @@
                   我们始终以客户意见为导向，筑造中原高品质装饰标杆。</p>
               </div>
             </div>
-            <h3 class="company-intro-card__title">七年之旅</h3>
-            <p class="company-intro-card__desc">2017-2026 我们一直在路上</p>
+            <h3 class="company-intro-card__title">{{ journeyCardTitle }}</h3>
+            <p class="company-intro-card__desc">{{ foundedToCurrentRange }} 我们一直在路上</p>
           </article>
           <article class="company-intro-card">
             <div class="company-intro-card__thumb">
@@ -67,19 +67,22 @@ import { Medal, OfficeBuilding, TrendCharts } from '@element-plus/icons-vue'
 import Img1 from '@/source/homepage/2/1.jpg'
 import Img2 from '@/source/homepage/2/2.jpg'
 import Img3 from '@/source/homepage/2/3.jpg'
+import { formatFoundedToCurrentRange, getJourneyCardTitle } from '@/utils/companyTimeline'
+
+const journeyCardTitle = getJourneyCardTitle()
+const foundedToCurrentRange = formatFoundedToCurrentRange('-')
 </script>
 
 <style scoped>
 .company-intro {
   border-bottom: 1px solid #f5f5f5;
-  padding: 5rem 1.5rem;
+  padding: 3.5rem 1rem;
   color: #000;
 }
 
 @media (min-width: 768px) {
   .company-intro {
-    padding-top: 5rem;
-    padding-bottom: 5rem;
+    padding: 5rem 1.5rem;
   }
 }
 
@@ -91,13 +94,21 @@ import Img3 from '@/source/homepage/2/3.jpg'
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 @media (min-width: 768px) {
   .company-intro__grid {
     flex-direction: row;
+    gap: 4rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .company-intro__grid {
     gap: 15rem;
     padding-left: 2rem;
     padding-right: 2rem;
@@ -181,11 +192,12 @@ import Img3 from '@/source/homepage/2/3.jpg'
 
 /* 下方三列项目（原 home-projects） */
 .company-intro-projects {
-  padding: 5rem 1.5rem;
+  padding: 3.25rem 1rem;
 }
 
 @media (min-width: 768px) {
   .company-intro-projects {
+    padding: 5rem 1.5rem;
     padding-top: 6rem;
     padding-bottom: 6rem;
   }
@@ -195,11 +207,18 @@ import Img3 from '@/source/homepage/2/3.jpg'
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 @media (min-width: 768px) {
+  .company-intro-projects__inner {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
   .company-intro-projects__inner {
     padding-left: 2rem;
     padding-right: 2rem;

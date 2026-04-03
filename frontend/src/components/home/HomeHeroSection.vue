@@ -18,10 +18,14 @@
       <NavigationBar :contrast-mode="activeNavContrastMode" />
 
       <h1 class="hero-frame6">
-        <div class="hero-frame5">
-          <span class="hero-title-first hero-title-display">以匠心</span>
-          <HeroQuoteSearchPill :messages="pillMessages" :active-index="activeMessageIndex" @search="onQuoteSearchClick" />
+        <div class="hero-pill">
+          <HeroQuoteSearchPill
+            :messages="pillMessages"
+            :active-index="activeMessageIndex"
+            @search="onQuoteSearchClick"
+          />
         </div>
+        <span class="hero-title-first hero-title-display">以匠心</span>
         <span class="hero-title-second hero-title-display">筑非凡</span>
       </h1>
     </div>
@@ -225,53 +229,87 @@ function onQuoteSearchClick() {
     0 1px 4px rgb(0 0 0 / 0.45);
 }
 
+/* 桌面：第一行「以匠心 | 玻璃条」，第二行「筑非凡」居中 */
 .hero-frame6 {
-  display: flex;
+  display: grid;
   width: 100%;
   max-width: 940px;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 6px;
   margin-top: auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 16px;
+  row-gap: 6px;
 }
 
-.hero-frame5 {
+.hero-pill {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
   display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 16px;
-  margin: 0;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .hero-title-first {
-  flex: 1 1 0;
+  grid-column: 1;
+  grid-row: 1;
   min-width: 0;
+  margin: 0;
   font-size: clamp(3.25rem, 9.2vw + 1rem, 6.85rem);
   transform: skewX(-3deg);
 }
 
 .hero-title-second {
-  display: block;
-  width: 100%;
-  max-width: 940px;
+  grid-column: 1 / -1;
+  grid-row: 2;
   margin: 0;
   text-align: center;
   transform: skewX(-3deg);
 }
 
 @media (max-width: 900px) {
-  .hero-frame5 {
-    flex-direction: column;
-    align-items: stretch;
+  .hero-shell {
+    padding: 16px 16px 96px;
+  }
+
+  /* 平板/手机：三行 — 玻璃条靠左、以匠心靠左、筑非凡靠右 */
+  .hero-frame6 {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    justify-items: start;
+    align-items: start;
+    row-gap: 10px;
+  }
+
+  .hero-pill {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    justify-content: flex-start;
   }
 
   .hero-title-first {
+    grid-column: 1;
+    grid-row: 2;
+    width: auto;
     text-align: left;
+    justify-self: start;
   }
 
-  .hero-frame6 {
-    align-items: stretch;
+  .hero-title-second {
+    grid-column: 1;
+    grid-row: 3;
+    width: 100%;
+    justify-self: stretch;
+    text-align: right;
+    line-height: 1.05;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-shell {
+    padding: 12px 12px 80px;
   }
 }
 

@@ -95,8 +95,27 @@
 import NavigationBar from '@/components/navigationBar.vue'
 import HomeFooter from '@/components/home/HomeFooter.vue'
 
-import storeImg1 from '@/source/store/1_1.jpg'
-import storeImg2 from '@/source/store/1_2.jpg'
+/* 案例图：文件名即门店/项目配对 */
+import wuyue1 from '@/source/store/1_1.jpg'
+import wuyue2 from '@/source/store/1_2.jpg'
+import fzyShangying1 from '@/source/store/福状元 商英街1.jpg'
+import fzyShangying2 from '@/source/store/福状元 商英街2.jpg'
+import shanyouyue1 from '@/source/store/山有月茶餐厅1.png'
+import shanyouyue2 from '@/source/store/山有月茶餐厅2.png'
+import fzyLuoyang1 from '@/source/store/福状元 洛阳分店1.jpg'
+import fzyLuoyang2 from '@/source/store/福状元洛阳分店2.jpg'
+import yangzhanggui1 from '@/source/store/杨掌柜辣椒炒肉 太康二路店.png'
+import yangzhanggui2 from '@/source/store/杨掌柜辣椒炒肉 太康二路店2.png'
+import fzyPingdingshan1 from '@/source/store/福状元平顶山分店.jpg'
+import fzyPingdingshan2 from '@/source/store/福状元平顶山分店2.jpg'
+import caida1 from '@/source/store/河南财经政法大学食堂1.png'
+import caida2 from '@/source/store/河南财经大学食堂2.png'
+import fzyYingxie1 from '@/source/store/福状元英协路1.jpg'
+import fzyYingxie2 from '@/source/store/福状元英协路2.jpg'
+import tea1 from '@/source/store/茶舍1.jpg'
+import tea2 from '@/source/store/茶舍2.jpg'
+import fzySuoling1 from '@/source/store/福状元索凌路1.png'
+import fzySuoling2 from '@/source/store/福状元索凌路2.png'
 
 const highlights = [
   {
@@ -131,57 +150,112 @@ const processSteps = [
 const priceBands = [
   {
     label: '标准升级',
-    range: '￥800 - ￥1200 / m²',
+    range: '￥800 - ￥1000 / m²',
     hint: '适合轻餐、零售标准化门店，重点优化灯光和基础形象。',
   },
   {
     label: '品牌强化',
-    range: '￥1200 - ￥1800 / m²',
+    range: '￥1000 - ￥1500 / m²',
     hint: '适合有品牌调性要求的主力门店，兼顾视觉和功能效率。',
   },
   {
     label: '旗舰定制',
-    range: '￥1800+ / m²',
+    range: '￥1500+ / m²',
     hint: '适合旗舰或体验型空间，强调差异化体验与材料细节。',
   },
 ] as const
 
+/** 品牌店装案例：福状元与其他品牌穿插展示，图片与文件名一一对应 */
 const cases = [
   {
-    title: '福状元 吾悦广场店',
-    imageA: storeImg1,
-    imageB: storeImg2,
+    title: '福状元 · 吾悦广场店',
+    imageA: wuyue1,
+    imageB: wuyue2,
     industry: '餐饮',
-    area: '230m²',
-    duration: '工期 45 天',
+    area: '约 210㎡',
+    duration: '工期 43 天',
     desc: '围绕翻台效率重做前后场区分，重点优化门头识别、等位区体验与后厨衔接。',
   },
   {
-    title: '轻食品牌示范店',
-    imageA: storeImg2,
-    imageB: storeImg1,
-    industry: '轻餐',
-    area: '180m²',
-    duration: '工期 36 天',
-    desc: '采用高识别度色彩与模块化展陈，强化点单区与出餐区协同，提升高峰时段承载力。',
+    title: '福状元 · 商英街店',
+    imageA: fzyShangying1,
+    imageB: fzyShangying2,
+    industry: '餐饮',
+    area: '约 180㎡',
+    duration: '工期 35 天',
+    desc: '郑州商英街粥品门店形象升级，服务区与就餐区清晰，兼顾高峰出餐与就餐舒适度。',
   },
   {
-    title: '社区零售空间改造',
-    imageA: storeImg1,
-    imageB: storeImg2,
-    industry: '零售',
-    area: '150m²',
-    duration: '工期 30 天',
-    desc: '通过陈列分区与灯光层次优化消费费用，兼顾坪效和陈列灵活度，降低后期改造成本。',
+    title: '山有月茶餐厅',
+    imageA: shanyouyue1,
+    imageB: shanyouyue2,
+    industry: '茶饮简餐',
+    area: '约 220㎡',
+    duration: '工期 45 天',
+    desc: '茶餐厅氛围与灯光层次落地，卡座与过道尺度兼顾私密与翻台，呈现温馨待客场景。',
   },
   {
-    title: '精品美业门店',
-    imageA: storeImg2,
-    imageB: storeImg1,
-    industry: '美业',
-    area: '260m²',
-    duration: '工期 52 天',
-    desc: '强调私密分区与品牌体验一致性，前台、咨询室、护理区实现视觉统一与功能分离。',
+    title: '福状元 · 洛阳分店',
+    imageA: fzyLuoyang1,
+    imageB: fzyLuoyang2,
+    industry: '餐饮',
+    area: '约 240㎡',
+    duration: '工期 46 天',
+    desc: '洛阳分店空间与总部形象统一，门头识别与室内主材选型可控，保障异地复制效率。',
+  },
+  {
+    title: '杨掌柜辣椒炒肉 · 太康二路店',
+    imageA: yangzhanggui1,
+    imageB: yangzhanggui2,
+    industry: '中式正餐',
+    area: '约 150㎡',
+    duration: '工期 40 天',
+    desc: '太康二路热炒门店重油烟与明厨展示并重，排风与灯光配合菜品呈现，提升就餐区舒适度。',
+  },
+  {
+    title: '福状元 · 平顶山分店',
+    imageA: fzyPingdingshan1,
+    imageB: fzyPingdingshan2,
+    industry: '餐饮',
+    area: '约 230㎡',
+    duration: '工期 44 天',
+    desc: '平顶山门店从门头到就餐区一体化交付，材质与工艺与品牌手册对齐，便于后期运维。',
+  },
+  {
+    title: '河南财经政法大学 · 食堂改造',
+    imageA: caida1,
+    imageB: caida2,
+    industry: '大众食堂',
+    area: '约 900㎡',
+    duration: '工期 72 天',
+    desc: '高校食堂档口与就餐大厅分区明确，人流线与取餐动线优化，满足集中就餐高峰。',
+  },
+  {
+    title: '福状元 · 英协路店',
+    imageA: fzyYingxie1,
+    imageB: fzyYingxie2,
+    industry: '餐饮',
+    area: '约 210㎡',
+    duration: '工期 40 天',
+    desc: '郑州英协路临街店招与室内统一设计语言，前场展示与后场备餐分区合理，保障出餐效率。',
+  },
+  {
+    title: '精品茶舍空间',
+    imageA: tea1,
+    imageB: tea2,
+    industry: '茶空间',
+    area: '约 170㎡',
+    duration: '工期 35 天',
+    desc: '茶舍静谧氛围与展陈结合，照明与材质突出茶品陈列，兼顾品茗与社交场景。',
+  },
+  {
+    title: '福状元 · 索凌路店',
+    imageA: fzySuoling1,
+    imageB: fzySuoling2,
+    industry: '餐饮',
+    area: '约 225㎡',
+    duration: '工期 43 天',
+    desc: '郑州索凌路门店从门头到室内完整落地，桌椅与灯光匹配品牌调性，交付即可开业。',
   },
 ] as const
 </script>
@@ -318,6 +392,16 @@ const cases = [
   border: 1px solid rgba(0, 0, 0, 0.08);
   background: #fff;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.04);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.store-highlight-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 .store-highlight-card__title {
@@ -386,6 +470,16 @@ const cases = [
   padding: 22px 16px 23px;
   background: linear-gradient(180deg, #fff 0%, #f9f9f9 100%);
   border: 1px solid rgba(0, 0, 0, 0.08);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.store-price-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 .store-price-card__label {
@@ -508,7 +602,47 @@ const cases = [
   transform: translateY(-1px);
 }
 
-@media (max-width: 980px) {
+@media (max-width: 980px) and (min-width: 768px) {
+  .store-highlights__grid,
+  .store-process__list,
+  .store-pricing__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .store-highlights__grid .store-section__title {
+    grid-column: 1 / -1;
+  }
+
+  .store-case-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .store-hero {
+    padding: 2.55rem 0 2.1rem;
+  }
+
+  .store-hero__inner {
+    padding: 1.85rem 1.35rem 2rem;
+  }
+
+  .store-hero__kicker {
+    padding-top: 0.3rem;
+  }
+
+  .store-hero__title {
+    margin-top: 0.9rem;
+  }
+
+  .store-hero__actions {
+    margin-top: 1.7rem;
+  }
+
+  .store-wrap {
+    padding: 0 1.25rem;
+  }
+}
+
+@media (max-width: 767px) {
   .store-highlights__grid,
   .store-process__list,
   .store-pricing__grid,
@@ -516,8 +650,24 @@ const cases = [
     grid-template-columns: 1fr;
   }
 
+  .store-hero {
+    padding: 2.65rem 0 2.2rem;
+  }
+
   .store-hero__inner {
-    padding: 1.4rem;
+    padding: 1.7rem 1.1rem 1.95rem;
+  }
+
+  .store-hero__kicker {
+    padding-top: 0.35rem;
+  }
+
+  .store-hero__title {
+    margin-top: 0.85rem;
+  }
+
+  .store-hero__actions {
+    margin-top: 1.75rem;
   }
 
   .store-wrap {
@@ -549,6 +699,16 @@ const cases = [
     opacity: 1;
     transform: none;
     animation: none;
+  }
+
+  .store-highlight-card,
+  .store-price-card {
+    transition: none;
+  }
+
+  .store-highlight-card:hover,
+  .store-price-card:hover {
+    transform: none;
   }
 }
 </style>

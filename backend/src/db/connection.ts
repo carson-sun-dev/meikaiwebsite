@@ -13,8 +13,9 @@ export async function createDatabase(): Promise<Db> {
     password: env.database.password,
     database: env.database.database,
     waitForConnections: true,
-    connectionLimit: 10,
-    maxIdle: 5,
+    // 2C/2G 等小规格机器上避免连接过多占用内存
+    connectionLimit: env.nodeEnv === 'production' ? 5 : 10,
+    maxIdle: env.nodeEnv === 'production' ? 3 : 5,
     idleTimeout: 60000,
     enableKeepAlive: true,
   })
