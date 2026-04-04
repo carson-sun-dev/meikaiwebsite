@@ -1,0 +1,6 @@
+# Let's Encrypt 证书约 90 天有效；certbot renew 建议在到期前自动执行。
+# 将下面「一行」整行复制到 crontab -e（注意改成你的项目路径），或运行：
+#   bash deploy/install-certbot-cron.sh
+#
+# 分 时 日 月 周
+0 3 * * * cd /home/ubuntu/meikaiwebsite && bash /home/ubuntu/meikaiwebsite/deploy/renew-cert.sh >> /home/ubuntu/certbot-renew.log 2>&1

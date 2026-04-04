@@ -92,19 +92,43 @@ cp deploy/env.prod.example .env
 
 将 Nginx 用的 **fullchain** / **privkey** 放到服务器目录，可挂载进 `nginx-proxy`（需自行改 `edge.ssl.conf` 里 `ssl_certificate` 路径并重建/重载）。一般仍推荐 Let's Encrypt + 自动续期。
 
-## 6. 证书续期
+## 6. 证书续期（Let’s Encrypt 免费）
 
-Let’s Encrypt 有效期约 90 天。`certbot renew` 为续期命令；项目提供：
+**Let’s Encrypt 对个人与商业站点均免费**，仅需定期续期（证书约 **90 天** 有效，续期后自动延长）。
+
+手动续期（测试用）：
 
 ```bash
 bash deploy/renew-cert.sh
 ```
 
-建议 **crontab**（每天凌晨尝试续期）：
+**推荐：自动续期**
 
-```cron
-0 3 * * * cd /opt/meikai_website && ./deploy/renew-cert.sh >> /var/log/certbot-renew.log 2>&1
+1. 建议先将当前用户加入 `docker` 组并重新登录，否则 cron 内 `sudo` 可能无交互而失败：  
+   `sudo usermod -aG docker $USER`
+2. 在**项目根目录**执行（会写入当前用户的 crontab，每日 3:00 尝试续期）：
+
+   ```bash
+   bash deploy/install-certbot-cron.sh
+   ```
+
+   或手动 `crontab -e`，粘贴 **`deploy/certbot-renew.crontab.example`** 里那一行，并把路径改成你的 `~/meikaiwebsite`。
+
+续期日志默认尝试 **`/var/log/certbot-renew.log`**；若无写权限则落在 **`~/certbot-renew.log`**（脚本会提示）。
+
+### 在 Mac 本机一键给服务器装上自动续期
+
+证书和 Docker 都在**腾讯云服务器**上，续期 cron 也必须写在服务器里；你只需在本机终端用 SSH 触发一次：
+
+```bash
+cd /你的本地项目路径/meikai_website   # 任意含 deploy/ 的目录即可
+export MEIKAI_SSH=ubuntu@你的公网IP    # 与 ssh 登录一致
+bash deploy/install-cron-from-local.sh
 ```
+
+（可选）项目不在默认路径时：`export MEIKAI_REMOTE_DIR=/实际路径/meikaiwebsite`
+
+前提：本机已能用 **`ssh ubuntu@公网IP`** 免密或手动输密码登录；远端已 **`git pull`** 含 `install-certbot-cron.sh`，且用户已加入 **`docker`** 组（见上一节）。
 
 ## 7. 常用运维命令
 

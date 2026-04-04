@@ -6,6 +6,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# 若已在 .env 中写入 SSL_EMAIL=，则自动载入
+if [[ -f .env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env
+  set +a
+fi
+
 # 无 docker 组权限时自动加 sudo（与常见云主机 ubuntu 一致）
 dc() {
   if docker info &>/dev/null; then
@@ -15,7 +23,7 @@ dc() {
   fi
 }
 
-export SSL_EMAIL="${SSL_EMAIL:?请先设置: export SSL_EMAIL=你的邮箱}"
+export SSL_EMAIL="${SSL_EMAIL:?未设置 SSL_EMAIL：在 .env 中增加 SSL_EMAIL=你的邮箱 或执行 export SSL_EMAIL=你的邮箱}"
 
 if [[ ! -f deploy/edge.active.conf ]]; then
   cp deploy/edge.http.conf deploy/edge.active.conf
