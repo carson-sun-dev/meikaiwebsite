@@ -6,6 +6,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# 无 docker 组权限时自动加 sudo（与常见云主机 ubuntu 一致）
+dc() {
+  if docker info &>/dev/null; then
+    docker compose "$@"
+  else
+    sudo docker compose "$@"
+  fi
+}
+
 export SSL_EMAIL="${SSL_EMAIL:?请先设置: export SSL_EMAIL=你的邮箱}"
 
 if [[ ! -f deploy/edge.active.conf ]]; then
@@ -13,9 +22,9 @@ if [[ ! -f deploy/edge.active.conf ]]; then
   echo "已创建 deploy/edge.active.conf（HTTP 模式）"
 fi
 
-docker compose -f deploy/docker-compose.prod.yml up -d
+dc -f deploy/docker-compose.prod.yml up -d
 
-docker compose -f deploy/docker-compose.prod.yml --profile tools run --rm certbot certonly \
+dc -f deploy/docker-compose.prod.yml --profile tools run --rm certbot certonly \
   --webroot \
   --webroot-path=/var/www/certbot \
   -d www.meikaizs.com \
@@ -26,6 +35,6 @@ docker compose -f deploy/docker-compose.prod.yml --profile tools run --rm certbo
   --no-eff-email
 
 cp deploy/edge.ssl.conf deploy/edge.active.conf
-docker compose -f deploy/docker-compose.prod.yml exec nginx-proxy nginx -s reload
+dc -f deploy/docker-compose.prod.yml exec nginx-proxy nginx -s reload
 
 echo "Let's Encrypt 证书已配置，请访问 https://www.meikaizs.com 验证。"

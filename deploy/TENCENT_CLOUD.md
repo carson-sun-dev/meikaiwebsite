@@ -46,6 +46,18 @@ cp deploy/env.prod.example .env
 
 否则浏览器在 HTTPS 下无法调用 `/api`。
 
+### 本机改代码后如何同步到服务器
+
+1. **本机**：在项目里 `git add` → `git commit` → `git push` 到 GitHub。  
+2. **服务器**：`cd ~/meikaiwebsite`（目录名以你为准）→ `git pull`。  
+3. **需要重新构建镜像时**（改了 `Dockerfile`、`docker-compose.prod.yml`、前后端依赖等）：
+
+   ```bash
+   sudo docker compose -f deploy/docker-compose.prod.yml up -d --build
+   ```
+
+   仅改 `.env` 时一般 `docker compose ... up -d` 即可（或 `restart` 对应服务）。
+
 ## 5. 首次启动与 SSL（Let’s Encrypt）
 
 1. **复制边缘配置（HTTP 阶段，便于签发证书）**

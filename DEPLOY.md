@@ -75,14 +75,20 @@ docker compose up -d --build
 
 ---
 
-## 三、上传到腾讯云（常见流程）
+## 三、腾讯云上线（HTTPS 与生产 Compose）
 
-1. **代码**：仓库推到 GitHub/Gitee，服务器上 `git clone` 或 `git pull`。
-2. **安装 Docker**：官方文档安装 Docker Engine + Docker Compose 插件。
-3. **配置**：在服务器项目根目录放好 `.env`（从 `.env.docker.example` 复制），**修改默认密码**、`CORS_ORIGINS` 写成你的 `https://域名` 或 `http://IP:端口`。
-4. **安全组 / 防火墙**：放行 **`WEB_PORT`（如 8080）**；不要把 MySQL 3306 暴露公网 unless 你知道风险。
-5. **启动**：`docker compose up -d --build`。
-6. **域名与 HTTPS（可选）**：在宿主机再装一层 Nginx 或 Caddy，把 443 → 本机 8080，并配置证书；或在云负载均衡上终结 HTTPS。
+完整步骤（防火墙、Let’s Encrypt、`.env` 模板）见 **`deploy/TENCENT_CLOUD.md`**。
+
+概要：
+
+1. **代码**：本机 `git push`，服务器 `git clone` / `git pull`（见上文「本机改代码后如何同步」）。
+2. **安装 Docker**：Docker Engine + Compose 插件。
+3. **配置**：服务器项目根目录 `.env`（可用 `deploy/env.prod.example`），**强密码** + `CORS_ORIGINS` 含 `https://www.你的域名` 与裸域。
+4. **防火墙**：放行 **80、443**（及 SSH 22）；**不要**把 MySQL `3306` 暴露公网。
+5. **启动**：`cp deploy/edge.http.conf deploy/edge.active.conf` 后  
+   `docker compose -f deploy/docker-compose.prod.yml up -d --build`，再按文档跑 `deploy/init-letsencrypt.sh` 启用 HTTPS。
+
+本地单机联调仍可用根目录 **`docker compose up -d --build`**（`http://localhost:8080`），与生产 **`deploy/docker-compose.prod.yml`** 是两套编排。
 
 若前后端**拆分不同域名**，构建前端时需带 API 地址：
 

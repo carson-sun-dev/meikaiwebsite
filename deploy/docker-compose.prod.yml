@@ -39,8 +39,9 @@ services:
 
   backend:
     build:
-      context: ..
-      dockerfile: backend/Dockerfile
+      # 与 backend/Dockerfile 中 COPY 路径一致：上下文必须是 backend/ 目录
+      context: ../backend
+      dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       PORT: 3001
@@ -71,8 +72,9 @@ services:
 
   web:
     build:
-      context: ..
-      dockerfile: frontend/Dockerfile
+      # 与 frontend/Dockerfile 中 COPY 路径一致：上下文必须是 frontend/ 目录
+      context: ../frontend
+      dockerfile: Dockerfile
       args:
         VITE_API_BASE: ''
         VITE_SITE_ORIGIN: ${VITE_SITE_ORIGIN:-https://www.meikaizs.com}
