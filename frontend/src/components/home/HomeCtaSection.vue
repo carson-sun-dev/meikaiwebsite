@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon.vue'
-import bgImg from '@/source/homepage/4/1.jpg'
+import bgImg from '@/source/homepage/4/1.webp'
 import { getCurrentYear } from '@/utils/companyTimeline'
 
 const scheduleYear = getCurrentYear()

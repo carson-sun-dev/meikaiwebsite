@@ -96,13 +96,13 @@ import NavigationBar from '@/components/navigationBar.vue'
 import HomeFooter from '@/components/home/HomeFooter.vue'
 
 import bus1a from '@/source/business/b1_1.webp'
-import bus1b from '@/source/business/b1_2.jpeg'
-import bus2a from '@/source/business/b2_1.jpeg'
-import bus2b from '@/source/business/b2_2.jpeg'
-import bus3a from '@/source/business/b3_1.jpeg'
-import bus3b from '@/source/business/b3_2.jpeg'
-import bus4a from '@/source/business/b4_1.jpeg'
-import bus4b from '@/source/business/b4_2.jpeg'
+import bus1b from '@/source/business/b1_2.webp'
+import bus2a from '@/source/business/b2_1.webp'
+import bus2b from '@/source/business/b2_2.webp'
+import bus3a from '@/source/business/b3_1.webp'
+import bus3b from '@/source/business/b3_2.webp'
+import bus4a from '@/source/business/b4_1.webp'
+import bus4b from '@/source/business/b4_2.webp'
 
 const highlights = [
   {

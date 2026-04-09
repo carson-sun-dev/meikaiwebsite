@@ -114,9 +114,9 @@ import { Location, Phone } from '@element-plus/icons-vue'
 
 import { submitFooterPhone } from '@/api/leads'
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon.vue'
-import logoImg from '@/source/logo/logo.png'
-import ziImg from '@/source/logo/zi.png'
-import wechatQrImg from '@/source/wechat.png'
+import logoImg from '@/source/logo/logo.webp'
+import ziImg from '@/source/logo/zi.webp'
+import wechatQrImg from '@/source/wechat.webp'
 import { validatePhone } from '@/utils/phoneValidation'
 import { getCurrentYear } from '@/utils/companyTimeline'
 

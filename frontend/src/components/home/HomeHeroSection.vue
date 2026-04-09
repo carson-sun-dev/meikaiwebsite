@@ -36,13 +36,13 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import NavigationBar from '@/components/navigationBar.vue'
-import imgBusiness1 from '@/source/homepage/1/bussiness1.jpg'
-import imgBusiness3 from '@/source/homepage/1/bussiness3.jpg'
-import imgHome1 from '@/source/homepage/1/home1.jpg'
-import imgHome2 from '@/source/homepage/1/home2.jpg'
-import imgStore1 from '@/source/homepage/1/store1.jpg'
-import imgStore2 from '@/source/homepage/1/store2.jpg'
-import imgStore3 from '@/source/homepage/1/store3.jpg'
+import imgBusiness1 from '@/source/homepage/1/bussiness1.webp'
+import imgBusiness3 from '@/source/homepage/1/bussiness3.webp'
+import imgHome1 from '@/source/homepage/1/home1.webp'
+import imgHome2 from '@/source/homepage/1/home2.webp'
+import imgStore1 from '@/source/homepage/1/store1.webp'
+import imgStore2 from '@/source/homepage/1/store2.webp'
+import imgStore3 from '@/source/homepage/1/store3.webp'
 
 import HeroQuoteSearchPill from './HeroQuoteSearchPill.vue'
 

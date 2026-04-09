@@ -2,18 +2,18 @@
  * 图片来自 `src/source/homepage/3/`，文件名（不含扩展名）即轮播下方说明。
  * 当前按文件体积大致对应分辨率：最大的 4 张作「大」、最小的 4 张作「小」、中间 4 张作「中」；每组顺序 大→小→中。
  */
-import img_dianya_keiting from '@/source/homepage/3/典雅客厅.jpg'
-import img_zhongshi_canguan from '@/source/homepage/3/中式餐馆.jpg'
-import img_xiuxian_huiyishi from '@/source/homepage/3/休闲会议室.jpg'
-import img_fushi_dianpu from '@/source/homepage/3/复式店铺.jpg'
-import img_jiaju_zoulang from '@/source/homepage/3/家居走廊.jpg'
-import img_dianpu_datang from '@/source/homepage/3/店铺大堂.jpg'
-import img_fenwei_menlang from '@/source/homepage/3/氛围门廊.jpg'
-import img_qingxin_fenwei from '@/source/homepage/3/清新氛围.jpg'
-import img_jianyue_qiantai from '@/source/homepage/3/简约前台.jpg'
-import img_menmian_fangmentou from '@/source/homepage/3/门面房门头.jpg'
-import img_canyin_baojian from '@/source/homepage/3/餐饮包间.jpg'
-import img_gaoya_chahuashi from '@/source/homepage/3/高雅茶话室.jpg'
+import img_dianya_keiting from '@/source/homepage/3/典雅客厅.webp'
+import img_zhongshi_canguan from '@/source/homepage/3/中式餐馆.webp'
+import img_xiuxian_huiyishi from '@/source/homepage/3/休闲会议室.webp'
+import img_fushi_dianpu from '@/source/homepage/3/复式店铺.webp'
+import img_jiaju_zoulang from '@/source/homepage/3/家居走廊.webp'
+import img_dianpu_datang from '@/source/homepage/3/店铺大堂.webp'
+import img_fenwei_menlang from '@/source/homepage/3/氛围门廊.webp'
+import img_qingxin_fenwei from '@/source/homepage/3/清新氛围.webp'
+import img_jianyue_qiantai from '@/source/homepage/3/简约前台.webp'
+import img_menmian_fangmentou from '@/source/homepage/3/门面房门头.webp'
+import img_canyin_baojian from '@/source/homepage/3/餐饮包间.webp'
+import img_gaoya_chahuashi from '@/source/homepage/3/高雅茶话室.webp'
 
 /** 单张在组内档位：大 / 中 / 小，形成错落层次 */
 export type GalleryItemSize = 'large' | 'medium' | 'small'

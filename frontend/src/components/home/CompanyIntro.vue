@@ -64,9 +64,9 @@
 <script setup lang="ts">
 import { Medal, OfficeBuilding, TrendCharts } from '@element-plus/icons-vue'
 
-import Img1 from '@/source/homepage/2/1.jpg'
-import Img2 from '@/source/homepage/2/2.jpg'
-import Img3 from '@/source/homepage/2/3.jpg'
+import Img1 from '@/source/homepage/2/1.webp'
+import Img2 from '@/source/homepage/2/2.webp'
+import Img3 from '@/source/homepage/2/3.webp'
 import { formatFoundedToCurrentRange, getJourneyCardTitle } from '@/utils/companyTimeline'
 
 const journeyCardTitle = getJourneyCardTitle()

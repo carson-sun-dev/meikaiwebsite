@@ -156,10 +156,10 @@ import NavigationBar from '@/components/navigationBar.vue'
 import HomeFooter from '@/components/home/HomeFooter.vue'
 import HomeSectionFade from '@/components/home/HomeSectionFade.vue'
 
-import heroImg from '@/source/about/1.jpg'
-import m1 from '@/source/about/2/1.jpg'
-import m2 from '@/source/about/2/2.jpg'
-import m3 from '@/source/about/2/3.jpg'
+import heroImg from '@/source/about/1.webp'
+import m1 from '@/source/about/2/1.webp'
+import m2 from '@/source/about/2/2.webp'
+import m3 from '@/source/about/2/3.webp'
 import { getMetricYearsPlus, getZhYearsZaiPhrase } from '@/utils/companyTimeline'
 
 const metricYearsPlus = getMetricYearsPlus()

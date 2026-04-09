@@ -87,8 +87,8 @@ import { useRoute } from 'vue-router'
 
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon.vue'
 
-import logoImg from '@/source/logo/logo.png'
-import ziImg from '@/source/logo/zi.png'
+import logoImg from '@/source/logo/logo.webp'
+import ziImg from '@/source/logo/zi.webp'
 
 const route = useRoute()
 const menuOpen = ref(false)
