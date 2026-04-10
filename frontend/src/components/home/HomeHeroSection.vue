@@ -68,6 +68,7 @@ import imgStore1_M from '@/source/homepage/1/mobile/store1.webp'
 import imgStore2_M from '@/source/homepage/1/mobile/store2.webp'
 import imgStore3_M from '@/source/homepage/1/mobile/store3.webp'
 
+
 const HERO_CAROUSEL_INTERVAL_MS = 4000
 const emit = defineEmits<{ quoteSearch: [targetRoute: string] }>()
 
@@ -110,15 +111,31 @@ function onVisibilityChange() {
   document.hidden ? stopAutoPlay() : startAutoPlay()
 }
 
+// 2. 统一生命周期管理
 onMounted(() => {
-  if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  startAutoPlay()
+  if (typeof window === 'undefined') return
+
+  // --- 预加载逻辑 ---
+  const isMobile = window.matchMedia('(max-width: 768px)').matches
+  const isTablet = window.matchMedia('(max-width: 1024px)').matches
+  
+  slides.slice(0, 2).forEach(slide => {
+    const img = new Image()
+    img.src = isMobile ? slide.mobile : (isTablet ? slide.tablet : slide.pc)
+  })
+
+  // --- 轮播逻辑 ---
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    startAutoPlay()
+  }
   document.addEventListener('visibilitychange', onVisibilityChange)
 })
 
 onUnmounted(() => {
   stopAutoPlay()
-  document.removeEventListener('visibilitychange', onVisibilityChange)
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('visibilitychange', onVisibilityChange)
+  }
 })
 
 function onQuoteSearchClick() { emit('quoteSearch', slides[activeIndex.value]?.route ?? '/store') }
@@ -289,14 +306,23 @@ function onQuoteSearchClick() { emit('quoteSearch', slides[activeIndex.value]?.r
   .hero-title-second {
     grid-column: 1;
     grid-row: 3;
-    text-align: right;
+    /* 修复样式丢失关键点： */
+    width: 100%;           /* 撑满宽度以便 text-align 生效 */
+    text-align: right;     
     line-height: 1.05;
+    transform: skewX(-3deg); /* 重新显式声明倾斜 */
+    margin-left: 4px;       /* 补偿因倾斜导致的左侧视觉缩进 */
+    margin-right: 4rem;
+    box-sizing: border-box;
   }
 }
 
 @media (max-width: 480px) {
   .hero-shell {
     padding: 12px 12px 80px;
+  }
+  .hero-title-second {
+    margin-left: 2px; /* 窄屏略微缩小补偿 */
   }
 }
 
