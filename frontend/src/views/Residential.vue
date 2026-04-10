@@ -310,7 +310,7 @@ const cases = [
   }
 
   .res-hero__inner {
-    padding: 1.85rem 1.35rem 2rem;
+    padding: 1rem 1.35rem 1.5rem !important;
   }
 
   .res-hero__kicker {
@@ -343,7 +343,7 @@ const cases = [
   }
 
   .res-hero__inner {
-    padding: 1.7rem 1.1rem 1.95rem;
+    padding: 0.5rem 1.1rem 1rem !important;
   }
 
   .res-hero__kicker {

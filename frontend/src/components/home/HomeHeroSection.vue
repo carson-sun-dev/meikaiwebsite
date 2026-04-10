@@ -4,11 +4,15 @@
 
     <div class="hero-bg" aria-hidden="true">
       <div
-        v-for="(img, i) in heroImages"
+        v-for="(slide, i) in slides"
         :key="`hero-bg-${i}`"
         class="hero-bg-layer"
-        :class="{ 'hero-bg-layer--active': i === activeImageIndex }"
-        :style="{ backgroundImage: `url(${img})` }"
+        :class="{ 'hero-bg-layer--active': i === activeIndex }"
+        :style="{ 
+          '--img-pc': `url(${slide.pc})`, 
+          '--img-tablet': `url(${slide.tablet})`, 
+          '--img-mobile': `url(${slide.mobile})` 
+        }"
       />
     </div>
 
@@ -34,108 +38,94 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-
 import NavigationBar from '@/components/navigationBar.vue'
-import imgBusiness1 from '@/source/homepage/1/bussiness1.webp'
-import imgBusiness3 from '@/source/homepage/1/bussiness3.webp'
-import imgHome1 from '@/source/homepage/1/home1.webp'
-import imgHome2 from '@/source/homepage/1/home2.webp'
-import imgStore1 from '@/source/homepage/1/store1.webp'
-import imgStore2 from '@/source/homepage/1/store2.webp'
-import imgStore3 from '@/source/homepage/1/store3.webp'
-
 import HeroQuoteSearchPill from './HeroQuoteSearchPill.vue'
 
-/** 背景与玻璃条文案同一时刻切换（同一 tick） */
-const HERO_CAROUSEL_INTERVAL_MS = 4000
+// --- 1. PC 高清版引入 (2560px) ---
+import imgBus1_PC from '@/source/homepage/1/pc/bussiness1.webp'
+import imgBus3_PC from '@/source/homepage/1/pc/bussiness3.webp'
+import imgHome1_PC from '@/source/homepage/1/pc/home1.webp'
+import imgHome2_PC from '@/source/homepage/1/pc/home2.webp'
+import imgStore1_PC from '@/source/homepage/1/pc/store1.webp'
+import imgStore2_PC from '@/source/homepage/1/pc/store2.webp'
+import imgStore3_PC from '@/source/homepage/1/pc/store3.webp'
 
-const emit = defineEmits<{
-  quoteSearch: [targetRoute: string]
-}>()
+// --- 2. Tablet 平板版引入 (1536px) ---
+import imgBus1_T from '@/source/homepage/1/tablet/bussiness1.webp'
+import imgBus3_T from '@/source/homepage/1/tablet/bussiness3.webp'
+import imgHome1_T from '@/source/homepage/1/tablet/home1.webp'
+import imgHome2_T from '@/source/homepage/1/tablet/home2.webp'
+import imgStore1_T from '@/source/homepage/1/tablet/store1.webp'
+import imgStore2_T from '@/source/homepage/1/tablet/store2.webp'
+import imgStore3_T from '@/source/homepage/1/tablet/store3.webp'
+
+// --- 3. Mobile 手机版引入 (1080px) ---
+import imgBus1_M from '@/source/homepage/1/mobile/bussiness1.webp'
+import imgBus3_M from '@/source/homepage/1/mobile/bussiness3.webp'
+import imgHome1_M from '@/source/homepage/1/mobile/home1.webp'
+import imgHome2_M from '@/source/homepage/1/mobile/home2.webp'
+import imgStore1_M from '@/source/homepage/1/mobile/store1.webp'
+import imgStore2_M from '@/source/homepage/1/mobile/store2.webp'
+import imgStore3_M from '@/source/homepage/1/mobile/store3.webp'
+
+const HERO_CAROUSEL_INTERVAL_MS = 4000
+const emit = defineEmits<{ quoteSearch: [targetRoute: string] }>()
 
 type HeroSlide = {
-  image: string
+  pc: string
+  tablet: string
+  mobile: string
   message: string
   navContrast: 'normal' | 'high'
   route: '/store' | '/business' | '/residential'
 }
 
-/**
- * 固定播放顺序：
- * 店铺 -> 商务 -> 家装，然后继续循环
- */
 const slides: readonly HeroSlide[] = [
-  { image: imgStore1, message: '店铺改造不歇业，施工能否分阶段？', navContrast: 'high', route: '/store' },
-  { image: imgBusiness1, message: '商务办公翻新，如何高效落地？', navContrast: 'normal', route: '/business' },
-  { image: imgHome1, message: '家装设计施工，多久可以入住？', navContrast: 'high', route: '/residential' },
-  { image: imgStore2, message: '店铺装饰风格怎么做更吸引顾客？', navContrast: 'high', route: '/store' },
-  { image: imgBusiness3, message: '办公空间升级，预算如何分配更合理？', navContrast: 'normal', route: '/business' },
-  { image: imgHome2, message: '家装风格落地，怎样兼顾颜值与实用？', navContrast: 'high', route: '/residential' },
-  { image: imgStore3, message: '我的店铺工程需要预算大概多少？', navContrast: 'high', route: '/store' },
+  { pc: imgStore1_PC, tablet: imgStore1_T, mobile: imgStore1_M, message: '店铺改造不歇业，施工能否分阶段？', navContrast: 'high', route: '/store' },
+  { pc: imgBus1_PC, tablet: imgBus1_T, mobile: imgBus1_M, message: '商务办公翻新，如何高效落地？', navContrast: 'normal', route: '/business' },
+  { pc: imgHome1_PC, tablet: imgHome1_T, mobile: imgHome1_M, message: '家装设计施工，多久可以入住？', navContrast: 'high', route: '/residential' },
+  { pc: imgStore2_PC, tablet: imgStore2_T, mobile: imgStore2_M, message: '店铺装饰风格怎么做更吸引顾客？', navContrast: 'high', route: '/store' },
+  { pc: imgBus3_PC, tablet: imgBus3_T, mobile: imgBus3_M, message: '办公空间升级，预算如何分配更合理？', navContrast: 'normal', route: '/business' },
+  { pc: imgHome2_PC, tablet: imgHome2_T, mobile: imgHome2_M, message: '家装风格落地，怎样兼顾颜值与实用？', navContrast: 'high', route: '/residential' },
+  { pc: imgStore3_PC, tablet: imgStore3_T, mobile: imgStore3_M, message: '我的店铺工程需要预算大概多少？', navContrast: 'high', route: '/store' },
 ] as const
 
-const heroImages = computed(() => slides.map((slide) => slide.image))
 const pillMessages = computed(() => slides.map((slide) => slide.message))
-
 const activeIndex = ref(0)
-const activeImageIndex = computed(() => activeIndex.value)
 const activeMessageIndex = computed(() => activeIndex.value)
 const activeNavContrastMode = computed(() => slides[activeIndex.value]?.navContrast ?? 'normal')
 
 let intervalId: ReturnType<typeof setInterval> | undefined
 
-function advanceSlide() {
-  activeIndex.value = (activeIndex.value + 1) % slides.length
-}
-
+function advanceSlide() { activeIndex.value = (activeIndex.value + 1) % slides.length }
 function startAutoPlay() {
-  if (intervalId !== undefined || slides.length <= 1) {
-    return
-  }
+  if (intervalId !== undefined || slides.length <= 1) return
   intervalId = setInterval(advanceSlide, HERO_CAROUSEL_INTERVAL_MS)
 }
-
 function stopAutoPlay() {
-  if (intervalId !== undefined) {
-    clearInterval(intervalId)
-    intervalId = undefined
-  }
+  if (intervalId !== undefined) { clearInterval(intervalId); intervalId = undefined }
 }
-
 function onVisibilityChange() {
-  if (typeof document === 'undefined') {
-    return
-  }
-  if (document.hidden) {
-    stopAutoPlay()
-    return
-  }
-  startAutoPlay()
+  if (typeof document === 'undefined') return
+  document.hidden ? stopAutoPlay() : startAutoPlay()
 }
 
 onMounted(() => {
-  if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    return
-  }
+  if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
   startAutoPlay()
-  if (typeof document !== 'undefined') {
-    document.addEventListener('visibilitychange', onVisibilityChange)
-  }
+  document.addEventListener('visibilitychange', onVisibilityChange)
 })
 
 onUnmounted(() => {
   stopAutoPlay()
-  if (typeof document !== 'undefined') {
-    document.removeEventListener('visibilitychange', onVisibilityChange)
-  }
+  document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 
-function onQuoteSearchClick() {
-  emit('quoteSearch', slides[activeIndex.value]?.route ?? '/store')
-}
+function onQuoteSearchClick() { emit('quoteSearch', slides[activeIndex.value]?.route ?? '/store') }
 </script>
 
 <style scoped>
+/* 1. 基础容器与动画 */
 .hero-section {
   position: relative;
   display: flex;
@@ -153,6 +143,7 @@ function onQuoteSearchClick() {
   background: #6a6a6a;
 }
 
+/* 2. 背景图片层 (分流核心) */
 .hero-bg {
   position: absolute;
   inset: 0;
@@ -167,6 +158,27 @@ function onQuoteSearchClick() {
   background-position: center;
   opacity: 0;
   transition: opacity 1.2s cubic-bezier(0.45, 0, 0.2, 1);
+  
+  /* 默认使用 PC 变量 */
+  background-image: var(--img-pc);
+
+  /* 硬件加速：防止移动端白屏/闪烁 */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* 响应式变量切换 */
+@media (max-width: 1024px) {
+  .hero-bg-layer {
+    background-image: var(--img-tablet);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-bg-layer {
+    background-image: var(--img-mobile);
+  }
 }
 
 .hero-bg-layer--active {
@@ -177,11 +189,9 @@ function onQuoteSearchClick() {
   .hero-bg-layer {
     transition: none;
   }
-
   .hero-bg-layer--active {
     opacity: 1;
   }
-
   .hero-bg-layer:not(.hero-bg-layer--active) {
     opacity: 0;
   }
@@ -194,6 +204,7 @@ function onQuoteSearchClick() {
   background: rgba(0, 0, 0, 0.28);
 }
 
+/* 3. 内容外壳与文案布局 */
 .hero-shell {
   position: relative;
   z-index: 10;
@@ -207,29 +218,17 @@ function onQuoteSearchClick() {
   box-sizing: border-box;
 }
 
-/* 主标语：简体优先、偏豪放的窄黑（Noto Sans SC Heavy） */
 .hero-title-display {
-  font-family:
-    'Noto Sans SC',
-    'Alibaba PuHuiTi',
-    'Source Han Sans SC',
-    'PingFang SC',
-    'Hiragino Sans GB',
-    'Microsoft YaHei',
-    sans-serif;
+  font-family: 'Noto Sans SC', 'Alibaba PuHuiTi', 'Source Han Sans SC', 'PingFang SC', sans-serif;
   font-size: clamp(2.85rem, 8.2vw + 1rem, 6.1rem);
   font-weight: 900;
-  font-style: normal;
   line-height: 1.06;
   letter-spacing: 0.01em;
   color: rgba(255, 255, 255, 0.88);
   -webkit-font-smoothing: antialiased;
-  text-shadow:
-    0 3px 34px rgb(0 0 0 / 0.58),
-    0 1px 4px rgb(0 0 0 / 0.45);
+  text-shadow: 0 3px 34px rgb(0 0 0 / 0.58), 0 1px 4px rgb(0 0 0 / 0.45);
 }
 
-/* 桌面：第一行「以匠心 | 玻璃条」，第二行「筑非凡」居中 */
 .hero-frame6 {
   display: grid;
   width: 100%;
@@ -254,7 +253,6 @@ function onQuoteSearchClick() {
 .hero-title-first {
   grid-column: 1;
   grid-row: 1;
-  min-width: 0;
   margin: 0;
   font-size: clamp(3.25rem, 9.2vw + 1rem, 6.85rem);
   transform: skewX(-3deg);
@@ -268,40 +266,29 @@ function onQuoteSearchClick() {
   transform: skewX(-3deg);
 }
 
+/* 4. 移动端 UI 适配 */
 @media (max-width: 900px) {
   .hero-shell {
     padding: 16px 16px 96px;
   }
-
-  /* 平板/手机：三行 — 玻璃条靠左、以匠心靠左、筑非凡靠右 */
   .hero-frame6 {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
     justify-items: start;
-    align-items: start;
     row-gap: 10px;
   }
-
   .hero-pill {
     grid-column: 1;
     grid-row: 1;
     justify-self: start;
-    justify-content: flex-start;
   }
-
   .hero-title-first {
     grid-column: 1;
     grid-row: 2;
-    width: auto;
-    text-align: left;
-    justify-self: start;
   }
-
   .hero-title-second {
     grid-column: 1;
     grid-row: 3;
-    width: 100%;
-    justify-self: stretch;
     text-align: right;
     line-height: 1.05;
   }
@@ -314,12 +301,8 @@ function onQuoteSearchClick() {
 }
 
 @keyframes hero-section-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {

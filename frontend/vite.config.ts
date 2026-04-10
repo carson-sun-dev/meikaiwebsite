@@ -7,6 +7,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/', // 显式声明根路径
   plugins: [
     vue(),
     vueDevTools(),
