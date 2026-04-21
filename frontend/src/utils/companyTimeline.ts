@@ -1,18 +1,18 @@
 /** 美恺创立年份（全站「写活」文案以此为准） */
-export const COMPANY_FOUNDED_YEAR = 2017
+export const COMPANY_FOUNDED_YEAR = 2019
 
 export function getCurrentYear(): number {
   return new Date().getFullYear()
 }
 
 /**
- * 自创立年至当前自然年，含首尾共历几个日历年（2017 年成立 → 2017 年为第 1 年）
+ * 自创立年至当前自然年，含首尾共历几个日历年（2019 年成立 → 2019 年为第 1 年）
  */
 export function getYearsSinceFoundedInclusive(): number {
   return Math.max(1, getCurrentYear() - COMPANY_FOUNDED_YEAR + 1)
 }
 
-/** 首页/关于页「2017—今年」 */
+/** 首页/关于页「2019—今年」 */
 export function formatFoundedToCurrentRange(sep: string = '—'): string {
   return `${COMPANY_FOUNDED_YEAR}${sep}${getCurrentYear()}`
 }

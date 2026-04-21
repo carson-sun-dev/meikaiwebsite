@@ -6,9 +6,6 @@ const router = createRouter({
     if (savedPosition) {
       return savedPosition
     }
-    if (to.path !== from.path) {
-      return { top: 0, left: 0, behavior: 'smooth' }
-    }
     return { top: 0, left: 0 }
   },
   routes: [

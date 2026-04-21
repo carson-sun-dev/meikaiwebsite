@@ -71,11 +71,11 @@
           <span class="home-footer__legal-sep" aria-hidden="true">|</span>
           <a
             class="home-footer__legal-link"
-            href="https://beian.mps.gov.cn/#/query/webSearch?recordcode=11010502000000"
+            href="https://beian.mps.gov.cn/#/query/webSearch?recordcode=41010402003541"
             target="_blank"
             rel="noopener noreferrer"
           >
-            豫公网安备 （暂时占位）XXXXXX号
+            豫公网安备41010402003541号
           </a>
           <span class="home-footer__legal-sep home-footer__legal-sep--fullwidth" aria-hidden="true">｜</span>
           <a

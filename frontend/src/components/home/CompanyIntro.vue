@@ -25,7 +25,7 @@
               <img :src="Img1" alt="" />
               <div class="company-intro-card__overlay" aria-hidden="true">
                 <el-icon class="company-intro-card__overlay-icon"><OfficeBuilding /></el-icon>
-                <p class="company-intro-card__overlay-text">始创于2017年，以郑州为核心辐射河南全省。
+                <p class="company-intro-card__overlay-text">始创于{{ foundedYear }}年，以郑州为核心辐射河南全省。
                   我们始终以客户意见为导向，筑造中原高品质装饰标杆。</p>
               </div>
             </div>
@@ -67,10 +67,11 @@ import { Medal, OfficeBuilding, TrendCharts } from '@element-plus/icons-vue'
 import Img1 from '@/source/homepage/2/1.webp'
 import Img2 from '@/source/homepage/2/2.webp'
 import Img3 from '@/source/homepage/2/3.webp'
-import { formatFoundedToCurrentRange, getJourneyCardTitle } from '@/utils/companyTimeline'
+import { COMPANY_FOUNDED_YEAR, formatFoundedToCurrentRange, getJourneyCardTitle } from '@/utils/companyTimeline'
 
 const journeyCardTitle = getJourneyCardTitle()
 const foundedToCurrentRange = formatFoundedToCurrentRange('-')
+const foundedYear = COMPANY_FOUNDED_YEAR
 </script>
 
 <style scoped>

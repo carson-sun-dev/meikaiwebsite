@@ -26,6 +26,7 @@ const props = withDefaults(
 
 const rootEl = ref<HTMLElement | null>(null)
 const visible = ref(props.appearImmediately)
+const revealedOnce = ref(props.appearImmediately)
 
 let observer: IntersectionObserver | undefined
 
@@ -41,7 +42,12 @@ function attach() {
       if (!entry) {
         return
       }
-      visible.value = entry.isIntersecting
+      if (!revealedOnce.value && entry.isIntersecting) {
+        visible.value = true
+        revealedOnce.value = true
+        // 区块首次出现后不再重复触发，避免滚动到临界位置时反复闪动
+        detach()
+      }
     },
     {
       root: null,

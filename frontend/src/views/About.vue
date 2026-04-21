@@ -54,7 +54,7 @@
                 <div class="about-intro__block">
                   <div class="about-intro__h">深耕中原{{ deepRootZai }}，匠心筑造品质标杆</div>
                   <ul class="about-intro__list">
-                    <li>始于 2017 年，聚焦店铺、商务办公、精品家装三大场景。</li>
+                    <li>始于 {{ foundedYear }} 年，聚焦店铺、商务办公、精品家装三大场景。</li>
                     <li>以郑州为核心，服务覆盖洛阳、开封、驻马店等河南多地。</li>
                     <li>坚持“方案可落地、工艺可验证、交付可追踪”的项目管理标准。</li>
                   </ul>
@@ -92,7 +92,7 @@
                 <div class="timeline-item__track" aria-hidden="true">
                   <span class="timeline-item__dot" />
                 </div>
-                <div class="timeline-item__period">2017 - 2020</div>
+                <div class="timeline-item__period">{{ foundedYear }} - 2020</div>
                 <div class="timeline-item__card">
                   <div class="timeline-item__content">
                     <h3 class="timeline-item__title">品牌创立与标准搭建</h3>
@@ -160,10 +160,11 @@ import heroImg from '@/source/about/1.webp'
 import m1 from '@/source/about/2/1.webp'
 import m2 from '@/source/about/2/2.webp'
 import m3 from '@/source/about/2/3.webp'
-import { getMetricYearsPlus, getZhYearsZaiPhrase } from '@/utils/companyTimeline'
+import { COMPANY_FOUNDED_YEAR, getMetricYearsPlus, getZhYearsZaiPhrase } from '@/utils/companyTimeline'
 
 const metricYearsPlus = getMetricYearsPlus()
 const deepRootZai = getZhYearsZaiPhrase()
+const foundedYear = COMPANY_FOUNDED_YEAR
 </script>
 
 <style scoped>

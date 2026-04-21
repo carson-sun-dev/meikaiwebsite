@@ -3,6 +3,16 @@
     <div class="hero-base" aria-hidden="true" />
 
     <div class="hero-bg" aria-hidden="true">
+      <!-- 提高首屏 Hero 首帧加载优先级，降低“文字先出现、背景后到位”的体感 -->
+      <img
+        class="hero-preload"
+        :src="firstSlideImage"
+        alt=""
+        aria-hidden="true"
+        fetchpriority="high"
+        loading="eager"
+        decoding="async"
+      />
       <div
         v-for="(slide, i) in slides"
         :key="`hero-bg-${i}`"
@@ -95,6 +105,12 @@ const pillMessages = computed(() => slides.map((slide) => slide.message))
 const activeIndex = ref(0)
 const activeMessageIndex = computed(() => activeIndex.value)
 const activeNavContrastMode = computed(() => slides[activeIndex.value]?.navContrast ?? 'normal')
+const firstSlideImage = computed(() => {
+  if (typeof window === 'undefined') return slides[0]?.pc ?? ''
+  if (window.matchMedia('(max-width: 768px)').matches) return slides[0]?.mobile ?? ''
+  if (window.matchMedia('(max-width: 1024px)').matches) return slides[0]?.tablet ?? ''
+  return slides[0]?.pc ?? ''
+})
 
 let intervalId: ReturnType<typeof setInterval> | undefined
 
@@ -166,6 +182,14 @@ function onQuoteSearchClick() { emit('quoteSearch', slides[activeIndex.value]?.r
   inset: 0;
   z-index: 1;
   overflow: hidden;
+}
+
+.hero-preload {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .hero-bg-layer {
@@ -268,6 +292,7 @@ function onQuoteSearchClick() { emit('quoteSearch', slides[activeIndex.value]?.r
 }
 
 .hero-title-first {
+  display: block;
   grid-column: 1;
   grid-row: 1;
   margin: 0;
@@ -276,9 +301,12 @@ function onQuoteSearchClick() { emit('quoteSearch', slides[activeIndex.value]?.r
 }
 
 .hero-title-second {
+  display: block;
   grid-column: 1 / -1;
   grid-row: 2;
   margin: 0;
+  width: 100%;
+  justify-self: stretch;
   text-align: center;
   transform: skewX(-3deg);
 }
