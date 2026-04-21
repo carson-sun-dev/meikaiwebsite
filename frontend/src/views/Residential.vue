@@ -218,7 +218,7 @@ const cases = [
 <style scoped>
 .res-page { min-height: 100dvh; background: #f4f4f4; color: #000; }
 .res-page__navbg { background: #000; }
-.res-page__main { padding: 1.6rem 0 3.6rem; }
+.res-page__main { padding: 1rem 0 3.6rem; }
 .res-page__main > section {
   opacity: 0;
   transform: translateY(14px);
@@ -231,7 +231,7 @@ const cases = [
 .res-page__main > section:nth-child(5) { animation-delay: 0.28s; }
 .res-page__main > section:nth-child(6) { animation-delay: 0.34s; }
 .res-wrap { width: 100%; max-width: 1160px; margin: 0 auto; padding: 0 1.5rem; box-sizing: border-box; }
-.res-hero { padding: 2.2rem 0 1.9rem; }
+.res-hero { padding: 1.4rem 0 1.9rem; }
 .res-hero__inner { border-radius: 24px; padding: 2.1rem; background: linear-gradient(145deg, #231f20 0%, #3a2d2a 100%); color: #fff; }
 .res-hero__kicker { margin: 0; font-size: .78rem; letter-spacing: .14em; font-weight: 700; color: rgba(255,255,255,.72); }
 .res-hero__title { margin: .65rem 0 0; font-size: clamp(1.8rem, 3vw + .8rem, 2.9rem); line-height: 1.15; letter-spacing: -.03em; }
@@ -306,7 +306,7 @@ const cases = [
   }
 
   .res-hero {
-    padding: 2.55rem 0 2.1rem;
+    padding: 1.8rem 0 2.1rem;
   }
 
   .res-hero__inner {
@@ -339,7 +339,7 @@ const cases = [
   }
 
   .res-hero {
-    padding: 2.65rem 0 2.2rem;
+    padding: 1.9rem 0 2.2rem;
   }
 
   .res-hero__inner {

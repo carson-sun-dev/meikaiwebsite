@@ -272,7 +272,7 @@ const cases = [
 }
 
 .store-page__main {
-  padding: 1.6rem 0 3.6rem;
+  padding: 1rem 0 3.6rem;
 }
 
 .store-page__main > section {
@@ -297,7 +297,7 @@ const cases = [
 }
 
 .store-hero {
-  padding: 2.2rem 0 1.9rem;
+  padding: 1.4rem 0 1.9rem;
 }
 
 .store-hero__inner {
@@ -618,7 +618,7 @@ const cases = [
   }
 
   .store-hero {
-    padding: 2.55rem 0 2.1rem;
+    padding: 1.8rem 0 2.1rem;
   }
 
   .store-hero__inner {
@@ -651,7 +651,7 @@ const cases = [
   }
 
   .store-hero {
-    padding: 2.65rem 0 2.2rem;
+    padding: 1.9rem 0 2.2rem;
   }
 
   .store-hero__inner {

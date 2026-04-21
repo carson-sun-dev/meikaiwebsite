@@ -39,12 +39,12 @@ function onContactSubmit(payload: unknown) {
 }
 
 .contact-page__main {
-  padding: 3rem 0 2.5rem;
+  padding: 1.8rem 0 2.5rem;
 }
 
 @media (max-width: 768px) {
   .contact-page__main {
-    padding-top: 2.25rem;
+    padding-top: 1.2rem;
   }
 }
 </style>

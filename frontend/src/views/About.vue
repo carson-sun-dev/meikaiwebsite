@@ -530,7 +530,14 @@ const foundedYear = COMPANY_FOUNDED_YEAR
   }
 
   .about-hero__content {
-    padding: 4.5rem 1.15rem 2.5rem;
+    min-height: 100dvh;
+    padding: 5.5rem 1.15rem 3.5rem;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .about-hero__desc {
+    max-width: 34rem;
   }
 
   .about-wrap {
@@ -558,6 +565,11 @@ const foundedYear = COMPANY_FOUNDED_YEAR
 
   .about-intro__block {
     font-size: 18px;
+    padding: 14px 14px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: linear-gradient(180deg, #fff 0%, #fafafa 100%);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
   }
 
   .timeline-item {

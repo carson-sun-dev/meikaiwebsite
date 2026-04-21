@@ -8,7 +8,7 @@
     }"
     :style="{ background: navBackground }"
   >
-    <nav class="nav-bar__wrap" aria-label="主导航">
+    <nav ref="navWrapRef" class="nav-bar__wrap" aria-label="主导航">
       <!-- ≥901px：桌面横排 -->
       <div class="nav-bar__desktop">
         <div class="nav-bar__links">
@@ -69,11 +69,44 @@
         id="nav-mobile-drawer"
         class="nav-bar__mobile-drawer"
       >
-        <router-link class="nav-bar__mobile-link" to="/" @click="closeMenu">网站首页</router-link>
-        <router-link class="nav-bar__mobile-link" to="/store" @click="closeMenu">品牌店装</router-link>
-        <router-link class="nav-bar__mobile-link" to="/business" @click="closeMenu">商务·办公</router-link>
-        <router-link class="nav-bar__mobile-link" to="/residential" @click="closeMenu">精品家装</router-link>
-        <router-link class="nav-bar__mobile-link nav-bar__mobile-link--secondary" to="/about" @click="closeMenu">
+        <router-link
+          class="nav-bar__mobile-link"
+          :class="{ 'nav-bar__mobile-link--active': isCurrentRoute('/home') }"
+          to="/home"
+          @click="closeMenu"
+        >
+          网站首页
+        </router-link>
+        <router-link
+          class="nav-bar__mobile-link"
+          :class="{ 'nav-bar__mobile-link--active': isCurrentRoute('/store') }"
+          to="/store"
+          @click="closeMenu"
+        >
+          品牌店装
+        </router-link>
+        <router-link
+          class="nav-bar__mobile-link"
+          :class="{ 'nav-bar__mobile-link--active': isCurrentRoute('/business') }"
+          to="/business"
+          @click="closeMenu"
+        >
+          商务·办公
+        </router-link>
+        <router-link
+          class="nav-bar__mobile-link"
+          :class="{ 'nav-bar__mobile-link--active': isCurrentRoute('/residential') }"
+          to="/residential"
+          @click="closeMenu"
+        >
+          精品家装
+        </router-link>
+        <router-link
+          class="nav-bar__mobile-link nav-bar__mobile-link--secondary"
+          :class="{ 'nav-bar__mobile-link--active': isCurrentRoute('/about') }"
+          to="/about"
+          @click="closeMenu"
+        >
           关于美恺
         </router-link>
       </div>
@@ -92,6 +125,7 @@ import ziImg from '@/source/logo/zi.webp'
 
 const route = useRoute()
 const menuOpen = ref(false)
+const navWrapRef = ref<HTMLElement | null>(null)
 
 const props = withDefaults(
   defineProps<{
@@ -125,18 +159,35 @@ function closeMenu() {
   menuOpen.value = false
 }
 
+function isCurrentRoute(path: string) {
+  if (path === '/home') {
+    return route.path === '/' || route.path === '/home'
+  }
+  return route.path === path
+}
+
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
     menuOpen.value = false
   }
 }
 
+function onPointerDown(e: PointerEvent) {
+  if (!menuOpen.value) return
+  const target = e.target
+  if (!(target instanceof Node)) return
+  if (navWrapRef.value?.contains(target)) return
+  menuOpen.value = false
+}
+
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
+  window.addEventListener('pointerdown', onPointerDown)
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('pointerdown', onPointerDown)
 })
 </script>
 
@@ -166,6 +217,7 @@ onUnmounted(() => {
 }
 
 .nav-bar__wrap {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -406,6 +458,7 @@ onUnmounted(() => {
   height: 48px;
   width: min(200px, 44vw);
   padding-left: 4px;
+  transform: translateX(6%);
 }
 
 .nav-bar__logo-link--compact .nav-bar__logo-mark {
@@ -427,11 +480,14 @@ onUnmounted(() => {
 }
 
 .nav-bar__mobile-drawer {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 40;
   display: flex;
-  width: 100%;
   flex-direction: column;
   gap: 2px;
-  margin-top: 6px;
   padding: 10px 6px 12px;
   box-sizing: border-box;
   border-top: 1px solid rgb(255 255 255 / 0.18);
@@ -462,9 +518,14 @@ onUnmounted(() => {
   background: rgb(255 255 255 / 0.08);
 }
 
+.nav-bar__mobile-link--active {
+  background: rgb(255 255 255 / 0.18);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.35) inset;
+  font-weight: 600;
+}
+
 .nav-bar__mobile-link--secondary {
   margin-top: 4px;
-  border: 1px solid rgb(255 255 255 / 0.35);
   font-weight: 600;
 }
 
