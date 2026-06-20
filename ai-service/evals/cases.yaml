@@ -1,0 +1,197 @@
+# 美恺 AI 客服评测集 V1 — Sprint 3 骨架阶段(2026-06-16)
+#
+# 设计原则:
+# - **mock 模式跑**:不消耗 LLM token,在 CI / 本地秒过;真 LLM 路径留给 V2 配合 LangFuse
+# - **关键词断言走 final_text**(含 Guardrail 修正段):mock 模式下 L2 输出固定 echo,但
+#   Guardrail 必触发追加"[系统校准]"段,所以 final_text 在报价分支下必含完整报价模板
+# - **覆盖矩阵**:3 业态报价 happy path + 引导分支(缺面积)+ 闲聊 + 多轮接续 +
+#   Guardrail 抗编造 + RAG 触发(可选)= 10 条
+#
+# Schema:
+#   name:                       唯一标识(snake_case)
+#   conversation_id:            按 thread_id 分组的会话标识(多轮共享同 ID)
+#   turns:                      list of { user_msg, expected_business_line, expected_branch,
+#                                          must_contain, must_not_contain }
+#   tags:                       维度标签(便于按标签过滤评测)
+#   notes:                      作者备注(为什么这条 case 要测)
+#
+# expected_branch: "quote" | "chat"
+# expected_business_line: "storefront" | "office" | "residential"
+#
+# Guardrail 行为(mock 模式)说明:
+#   - quote 分支下,mock L2 不会原样输出 quote_block → Guardrail 必判定 disclaimer_missing
+#     → 在 final_text 末尾追加"[系统校准]"权威段(含三档 + 免责声明)
+#   - chat 分支下,mock L2 输出无金额,Guardrail.ok=True,final_text = mock echo
+
+- name: storefront_hotpot_full_slots
+  conversation_id: eval-1
+  tags: [quote, storefront, happy_path]
+  notes: 火锅店报价 happy path — 槽位齐套,直接 quote 分支
+  turns:
+    - user_msg: "我开个火锅店,200 平米,大概多少钱"
+      expected_business_line: storefront
+      expected_branch: quote
+      must_contain:
+        - "200㎡"
+        - "火锅店"
+        - "基础档"
+        - "中端档"
+        - "高端档"
+        - "这只是AI输出的价格"
+        - "系统校准"  # mock 模式必触发 Guardrail
+      must_not_contain:
+        - "¥99999"
+
+- name: office_full_slots
+  conversation_id: eval-2
+  tags: [quote, office, happy_path]
+  notes: 办公空间 80 平 — 触发 industry_default office 锚定值(¥700-900)
+  turns:
+    - user_msg: "我有个办公室 80 平米,装修要多少钱"
+      expected_business_line: office
+      expected_branch: quote
+      must_contain:
+        - "80㎡"
+        - "办公空间"
+        - "基础档"
+        - "中端档"
+        - "高端档"
+        - "这只是AI输出的价格"
+
+- name: residential_full_slots
+  conversation_id: eval-3
+  tags: [quote, residential, happy_path]
+  notes: 住宅 120 平 — 触发 industry_default residential
+  turns:
+    - user_msg: "家里 120 平想翻新,装修要多少钱"
+      expected_business_line: residential
+      expected_branch: quote
+      must_contain:
+        - "120㎡"
+        - "住宅家装"
+        - "基础档"
+        - "中端档"
+        - "高端档"
+        - "这只是AI输出的价格"
+
+- name: missing_area_falls_to_chat
+  conversation_id: eval-4
+  tags: [chat, storefront, slot_missing]
+  notes: 缺面积 → 引导分支,不出报价 / 不出三档
+  turns:
+    - user_msg: "想开家眼镜店,装修咋样"
+      expected_business_line: storefront
+      expected_branch: chat
+      must_contain:
+        - "已知信息"  # PromptEchoLLM echo prompt 必含
+      must_not_contain:
+        - "基础档"
+        - "中端档"
+        - "这只是AI输出的价格"  # chat 分支无报价 → 无 DISCLAIMER
+
+- name: no_quote_intent_chat
+  conversation_id: eval-5
+  tags: [chat, residential, intent_false]
+  notes: 报价意图为 false → 即使面积齐也走 chat
+  turns:
+    - user_msg: "我家 100 平,你们都做什么类型装修"
+      expected_business_line: residential
+      expected_branch: chat
+      must_contain:
+        - "已知信息"
+      must_not_contain:
+        - "基础档"
+
+- name: multi_turn_slot_accumulation
+  conversation_id: eval-6
+  tags: [quote, storefront, multi_turn, slot_persist]
+  notes: 多轮接续 — 轮 1 报价意图 + 业态(缺面积) → 轮 2 只补面积 → 报价分支命中
+  turns:
+    - user_msg: "想开个火锅店,装修要多少钱"
+      expected_business_line: storefront
+      expected_branch: chat
+      must_contain:
+        - "已知信息"
+        - "火锅店"
+      must_not_contain:
+        - "基础档"
+    - user_msg: "200 平米"
+      expected_business_line: storefront
+      expected_branch: quote
+      must_contain:
+        - "200㎡"
+        - "火锅店"
+        - "基础档"
+        - "中端档"
+        - "高端档"
+        - "这只是AI输出的价格"
+
+- name: multi_turn_router_short_circuit
+  conversation_id: eval-7
+  tags: [quote, office, multi_turn, router_short_circuit]
+  notes: 多轮 — 轮 2 router 应短路复用上一轮 business_line(不让 L0 重判)
+  turns:
+    - user_msg: "办公室 120 平 多少钱"
+      expected_business_line: office
+      expected_branch: quote
+      must_contain:
+        - "120㎡"
+        - "办公空间"
+        - "基础档"
+    - user_msg: "那中端档大概什么工艺"
+      expected_business_line: office  # 必须保留为 office,不能被 router 改判
+      expected_branch: quote           # is_quote_intent 锁定 + slots 已齐 → 仍 quote
+      must_contain:
+        - "120㎡"
+        - "办公空间"
+
+- name: guardrail_blocks_hallucinated_amount
+  conversation_id: eval-8
+  tags: [guardrail, storefront, robustness]
+  notes: |
+    Guardrail 抗编造 — mock 模式下 L2 输出"奇怪数字"会被 Guardrail 拦截 +
+    追加权威段。final_text 必含权威报价,且 must_not_contain 验证非法金额不会"通过"
+  turns:
+    - user_msg: "我开个茶馆,150 平,大概多少钱"
+      expected_business_line: storefront
+      expected_branch: quote
+      must_contain:
+        - "150㎡"
+        - "系统校准"
+        - "这只是AI输出的价格"
+      must_not_contain:
+        - "¥888888"  # 任意离谱数字都不该裸出现在 final_text
+
+- name: small_area_storefront
+  conversation_id: eval-9
+  tags: [quote, storefront, edge_small_area]
+  notes: 小面积(30 平咖啡店)— 验证 quote 工具对小面积的总价依然合理(不出现 ¥0 / 负数)
+  turns:
+    - user_msg: "想开 30 平咖啡店,多少钱"
+      expected_business_line: storefront
+      expected_branch: quote
+      must_contain:
+        - "30㎡"
+        - "基础档"
+        - "中端档"
+        - "高端档"
+        - "这只是AI输出的价格"
+      must_not_contain:
+        - "¥0/㎡"
+        - "总价 ¥0-"
+
+- name: large_area_residential
+  conversation_id: eval-10
+  tags: [quote, residential, edge_large_area]
+  notes: 大面积(400 平别墅)— 验证 residential 区间在大面积下不爆位 + 三档单调
+  turns:
+    - user_msg: "我家别墅 400 平,装修要多少钱"
+      expected_business_line: residential
+      expected_branch: quote
+      must_contain:
+        - "400㎡"
+        - "住宅家装"
+        - "基础档"
+        - "中端档"
+        - "高端档"
+        - "这只是AI输出的价格"

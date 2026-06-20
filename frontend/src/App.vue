@@ -2,6 +2,7 @@
 import { useHead } from '@unhead/vue'
 import { useRoute } from 'vue-router'
 
+import { ChatWidget } from '@/components/ChatWidget'
 import { canonicalUrl, getSeoForRoute, organizationJsonLd } from '@/seo/seoConfig'
 
 const route = useRoute()
@@ -40,6 +41,7 @@ useHead(() => {
 
 <template>
   <router-view />
+  <ChatWidget />
 </template>
 
 <style scoped></style>
