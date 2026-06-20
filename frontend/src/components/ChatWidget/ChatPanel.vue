@@ -20,6 +20,8 @@ const input = ref('')
 const streaming = ref(false)
 const errorMsg = ref('')
 const scrollerRef = ref<HTMLElement | null>(null)
+// 首轮空,服务端 meta 回的 conversation_id 在这里保存,后续轮回带,thread_id 不变 → 跨轮 state 持久化
+const conversationId = ref<string | null>(null)
 
 let abortCtl: AbortController | null = null
 
@@ -40,10 +42,13 @@ async function send() {
   try {
     await streamChat({
       message: text,
+      conversationId: conversationId.value,
       signal: abortCtl.signal,
       onEvent: (e: AiSseEvent) => {
         const target = messages.value[idx]
-        if (e.type === 'delta' && target) {
+        if (e.type === 'meta') {
+          if (e.conversationId && !conversationId.value) conversationId.value = e.conversationId
+        } else if (e.type === 'delta' && target) {
           target.text += e.text
           scrollToBottom()
         } else if (e.type === 'error') {

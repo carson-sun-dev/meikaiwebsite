@@ -3,7 +3,7 @@ name = "meikai-ai-service"
 version = "0.1.0"
 description = "美恺装饰 AI 客服与智能报价系统 — FastAPI + LangGraph"
 requires-python = ">=3.12,<3.13"
-readme = "DESIGN.md"
+readme = "README.md"
 
 # DESIGN.md §13 已锁定的核心依赖。Sprint 推进时按需追加,不要提前装。
 dependencies = [
@@ -24,6 +24,7 @@ dependencies = [
   "langchain-core>=0.3",
   "langgraph-checkpoint-mysql>=2.0",   # 社区包,版本锁死(DESIGN §13.1)
   "aiomysql>=0.2",
+  "cryptography>=43.0",                # aiomysql 连 mysql 8.0 caching_sha2_password 必需
 
   # 向量检索
   "qdrant-client>=1.12",

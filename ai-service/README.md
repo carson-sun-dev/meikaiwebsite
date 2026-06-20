@@ -1,78 +1,62 @@
 # meikai ai-service
 
-美恺装饰 AI 客服与智能报价系统。完整设计见 [DESIGN.md](./DESIGN.md);评审过程见 [SESSION_2026-05-30.md](./SESSION_2026-05-30.md)。
+美恺装饰 AI 客服与智能报价系统。本仓库为 public 仓库,设计文档 (`DESIGN.md`) 与会话记录 (`WORKLOG_*.md`) 不入库,本地保留;部署文档见 [`deploy/AI_SERVICE_DEPLOY.md`](../deploy/AI_SERVICE_DEPLOY.md)。
 
-## 状态(2026-06-07)
+## 架构概览
 
-Sprint 1 进行中。已就位:
-- `pyproject.toml` / `Dockerfile` / `.env.full.example` / `.env.prod.example`
-- `app/main.py` FastAPI 骨架 + `/healthz` + `/api/ai/chat` SSE(mock LLM)
-- `app/config.py` Pydantic Settings(含三 provider 字段)
-- `app/infra/{llm_client,embedding,reranker,ocr,qdrant_client}.py` Provider 抽象 + mock/local/api 多实现
-- 目录骨架(schemas / knowledge / etl / data / logs / tests / guardrails)
+- **后端**:FastAPI + LangGraph + Hybrid RAG(Qdrant 服务端 BM25 + IDF)
+- **LLM**:火山方舟(Doubao Lite / DeepSeek)统一入口,SSE 流式输出
+- **持久化**:MySQL (langgraph-checkpoint-mysql) + Qdrant (向量+全文)
+- **观测**:LangFuse trace(可选)
+- **入口**:Nginx `/api/ai/*` → ai-service:8000
 
-待完成(Sprint 1 剩余):ETL 灌 Qdrant、Jieba 分词器 + 装修词典、MySQL migration、Guardrails 实现(§5.7)。
+模块布局:
 
-## 本地启动(开发模式)
-
-```bash
-# 1) Python 3.12(用 pyenv / uv 装)
-pyenv install 3.12.7 && pyenv local 3.12.7
-
-# 2) 装依赖(推荐 uv,fallback pip)
-uv sync   # 或:python -m venv .venv && source .venv/bin/activate && pip install -e .
-
-# 3) 配置(本地完整版用 full,生产 2C4G 用 prod)
-cp .env.full.example .env
-# 编辑 .env(Sprint 1/2 期间 LLM_MODE=mock 即可,不需要真 key)
-
-# 4) 起服务
-uvicorn app.main:app --reload --port 8000
-
-# 5) 验证
-curl http://localhost:8000/healthz
-curl -N -X POST http://localhost:8000/api/ai/chat \
-  -H 'Content-Type: application/json' \
-  -d '{"message":"我想开一家咖啡店"}'
 ```
+app/
+  main.py               FastAPI 入口 + /healthz + /api/ai/chat(SSE) + lifespan
+  config.py             Pydantic Settings(三 provider 抽象 + Guardrail 阈值)
+  graphs/               LangGraph:router + subgraphs(报价/闲聊) + state
+  guardrails/           输出侧 quote_sanity 校验
+  infra/                LLM / embedding / reranker / ocr / qdrant / checkpointer 抽象
+  tools/                quote(三业态报价) + rag(Hybrid 检索)
+schemas/                Pydantic 三业态 slot 定义
+knowledge/              人工词典 / persona / question_bank
+```
+
+## 部署上线
+
+直接看 [`deploy/AI_SERVICE_DEPLOY.md`](../deploy/AI_SERVICE_DEPLOY.md)。简言之 5 步:
+
+1. 服务器拉代码,复制 `.env.prod.example` → `.env` 填真 Key
+2. `docker compose -f deploy/docker-compose.prod.yml build ai-service`
+3. 灌 Qdrant 索引一次(`etl/build_index.py`)
+4. `docker compose -f deploy/docker-compose.prod.yml up -d`
+5. `nginx -s reload` + 验证 `/api/ai/chat` SSE
 
 ## API Key 安全提示
 
-- 真实 Key **永远不要**写进 `.env` 之外的文件;`apikey.txt` 已在仓库根 `.gitignore`
-- 部署到生产时通过 docker-compose `env_file` 注入,不要 `ENV` 写死
+- 真实 Key **永远不要**进库;`apikey.txt` / `.env` 已在仓库根 `.gitignore`
+- 生产 Key 仅在服务器 `.env` 现场填,经 docker-compose `env_file` 注入
+- DESIGN.md / WORKLOG_*.md 含商业策略与报价数据,**不进 public 仓库**(.gitignore 已屏蔽)
 
-## 与现网站点集成
+## 与网站现有栈集成
 
-参见 [DESIGN.md §9 网站接入计划](./DESIGN.md)。简言之:
-- Nginx 加 `/api/ai/*` 转 `ai-service:8000`,SSE 必须 `proxy_buffering off`
-- 复用现网 MySQL(新增三张表见 `backend/src/db/migrate.ts`)
-- 转人工时内网调 `backend:3001/api/leads/quote`
+详见 DESIGN §9(本地文档)。要点:
 
-## 测试
+- Nginx `/api/ai/chat` 必须 `proxy_buffering off`,否则 SSE 不流出
+- 复用网站 MySQL 库(新增 `ai_sessions` / `ai_checkpoints` / `ai_feedback` 三表,见 `backend/src/db/migrate.ts`)
+- 转人工时 ai-service 内网调 `backend:3001/api/leads/quote` 复用现有留资链路
 
-```bash
-# 单测(零外部依赖,默认套件 — 集成测试自动排除)
-python -m pytest -v
+## 集成测试说明(本地补回归时参考)
 
-# 集成测试(需 docker mysql 起来 + 账号密码与当前 .env 同步)
-docker compose up -d mysql            # 在仓库顶层目录
-python -m pytest -m integration -v    # MySQL 不可达时优雅 skip
+> 本仓库默认不在 CI 跑 ai-service 测试(prod 上线路径)。
+> 本地若要做回归,见下:
 
-# 跑全部(单测 + 集成)
-python -m pytest -m "integration or not integration" -v
-```
-
-### 集成测试说明
-
-- **范围**:`tests/integration/test_mysql_checkpointer.py` 验证 LangGraph multi-turn 走真 MySQL
-  (跨进程跨轮 state 持久化、thread 隔离、open_checkpointer 工厂成功路径)
-- **schema 注记**:`backend/src/db/migrate.ts` 里的 `ai_checkpoints` 表是历史预留,
-  **实际不被使用** — langgraph-checkpoint-mysql 3.0.0 `setup()` 自建 4 张表
+- **单测**:`python -m pytest -v`(60 项,零外部依赖,集成自动 deselect)
+- **集成**:`python -m pytest -m integration -v`(需 docker mysql 可达,否则优雅 skip)
+- **schema 注记**:`backend/src/db/migrate.ts` 的 `ai_checkpoints` 表是历史预留;
+  实际 langgraph-checkpoint-mysql 3.0.0 `setup()` 自建 4 张表
   (`checkpoints` / `checkpoint_blobs` / `checkpoint_writes` / `checkpoint_migrations`)
-- **测试库 = 现有 meikai 库**:fixture 在 session 前后只 drop langgraph 的 4 张表,
-  不动 backend 建的 submissions/ai_sessions/ai_feedback;原因见 `tests/conftest.py:_resolved_mysql_config` 注释
-- **mysql 密码同步问题**:若 `mysql_data` volume 是旧容器留下的,密码可能与当前 `.env`
-  不一致。fixture 检测到 access denied 会自动 skip 并打印重建命令:
-  ```bash
-  docker compose down && docker volume rm meikai_website_mysql_data && docker compose up -d mysql
-  ```
+- **mysql 密码同步**:若 `mysql_data` volume 是旧容器留下的,密码可能与当前 `.env` 不一致。
+  fixture 检测 access denied 会 skip 并打印重建命令。

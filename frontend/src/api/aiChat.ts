@@ -13,26 +13,33 @@ function apiUrl(path: string): string {
 }
 
 export type AiSseEvent =
+  | { type: 'meta'; conversationId?: string; businessLine?: string }
   | { type: 'delta'; text: string }
   | { type: 'done' }
   | { type: 'error'; code: string; msg: string }
 
 export interface ChatStreamOptions {
   message: string
+  // WHY 必传 conversationId:ai-service 用它做 thread_id,跨轮持久化 router/slots state;
+  // 不传则每轮新生成,checkpointer 跨轮接续失效(Sprint 2 step 6 槽位多轮记忆白做)
+  conversationId?: string | null
   signal?: AbortSignal
   onEvent: (e: AiSseEvent) => void
 }
 
 /**
  * 调用 /api/ai/chat 的 SSE 流。逐事件回调,调用方负责拼接 delta.text。
- * 协议见 ai-service/app/main.py:chat — event 字段是 delta|done|error,data 为 JSON。
+ * 协议见 ai-service/app/main.py:chat — event 字段是 meta|delta|done|error,data 为 JSON。
  */
 export async function streamChat(opts: ChatStreamOptions): Promise<void> {
-  const { message, signal, onEvent } = opts
+  const { message, conversationId, signal, onEvent } = opts
+  const body: Record<string, unknown> = { message }
+  if (conversationId) body.conversation_id = conversationId
+
   const res = await fetch(apiUrl('/api/ai/chat'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify(body),
     credentials: 'include',
     signal,
   })
@@ -75,6 +82,13 @@ function parseFrame(frame: string): AiSseEvent | null {
 
   try {
     const obj = JSON.parse(data) as Record<string, unknown>
+    if (event === 'meta') {
+      return {
+        type: 'meta',
+        conversationId: typeof obj.conversation_id === 'string' ? obj.conversation_id : undefined,
+        businessLine: typeof obj.business_line === 'string' ? obj.business_line : undefined,
+      }
+    }
     if (event === 'delta' && typeof obj.text === 'string') {
       return { type: 'delta', text: obj.text }
     }
