@@ -60,3 +60,29 @@ target/
 # Local sqlite / db files
 *.sqlite
 *.db
+
+# Secrets — ai-service 专用(API Key 永不进库)
+ai-service/apikey.txt
+ai-service/.env
+ai-service/.env.*
+!ai-service/.env.example
+!ai-service/.env.full.example
+!ai-service/.env.prod.example
+
+# ai-service runtime artifacts
+ai-service/.venv/
+ai-service/data/qdrant_storage/
+ai-service/data/*.jsonl
+ai-service/data/*.json
+ai-service/knowledge/manual_*.json
+ai-service/logs/
+
+# ai-service 本地草稿 / 面试题准备(不入库)
+ai-service/question.txt
+ai-service/.claude/
+
+# ai-service 商业敏感文档(public 仓库故不入库;物理文件本地保留)
+ai-service/DESIGN.md
+ai-service/DESIGN.md.bak*
+ai-service/WORKLOG_*.md
+ai-service/SESSION_*.md

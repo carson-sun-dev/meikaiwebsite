@@ -1,4 +1,3 @@
-# 本地开发。生产上线（HTTPS / 腾讯云）见 deploy/docker-compose.prod.yml 与 deploy/TENCENT_CLOUD.md
 
 services:
   mysql:
@@ -6,9 +5,9 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-devroot_change_me}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-meikai}
-      MYSQL_USER: ${MYSQL_USER:-meikai}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-meikai_pass_change_me}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-change_me}
+      MYSQL_USER: ${MYSQL_USER:-change_me}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change_me}
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -55,5 +54,48 @@ services:
     depends_on:
       - backend
 
+  # ---- AI 栈:默认不启,需要时 `docker compose --profile ai up` ----
+  # dev 优先开发体验:暴露端口到 127.0.0.1、代码挂载、uvicorn --reload
+  qdrant:
+    image: qdrant/qdrant:v1.15.2
+    profiles: ['ai']
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:6333:6333'
+    volumes:
+      - qdrant_dev:/qdrant/storage
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    profiles: ['ai']
+    restart: unless-stopped
+    env_file:
+      - ./ai-service/.env
+    environment:
+      # dev 默认就指向同 compose 的服务名
+      QDRANT_URL: http://qdrant:6333
+      MYSQL_HOST: mysql
+      BACKEND_INTERNAL_URL: http://backend:3001
+      LLM_MODE: ${LLM_MODE:-mock}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    ports:
+      - '127.0.0.1:8000:8000'
+    # 代码热挂载:改 Python 文件 uvicorn 自动 reload
+    volumes:
+      - ./ai-service/app:/app/app
+      - ./ai-service/etl:/app/etl
+      - ./ai-service/schemas:/app/schemas
+      - ./ai-service/knowledge:/app/knowledge
+    # 覆盖镜像 entrypoint,dev 模式跳过 oom_score_adj 写入,直接开 --reload
+    entrypoint: []
+    command: ['uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8000', '--reload']
+
 volumes:
   mysql_data:
+  qdrant_dev:
