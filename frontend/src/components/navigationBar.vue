@@ -2,22 +2,12 @@
   <header
     class="nav-bar"
     :class="{
-      'nav-bar--contrast-normal': isHomeRoute && contrastMode === 'normal',
-      'nav-bar--contrast-high': isHomeRoute && contrastMode === 'high',
-      'nav-bar--solid-tall': isSolidNavBar,
+      'nav-bar--scrolled': isScrolled,
     }"
-    :style="{ background: navBackground }"
   >
     <nav ref="navWrapRef" class="nav-bar__wrap" aria-label="主导航">
-      <!-- ≥901px：桌面横排 -->
+      <!-- ≥901px:桌面横排 — 左 logo / 中链接 / 右 CTA(圆弧) -->
       <div class="nav-bar__desktop">
-        <div class="nav-bar__links">
-          <router-link class="nav-bar__link" to="/">网站首页</router-link>
-          <router-link class="nav-bar__link" to="/store">品牌店装</router-link>
-          <router-link class="nav-bar__link" to="/business">商务·办公</router-link>
-          <router-link class="nav-bar__link" to="/residential">精品家装</router-link>
-        </div>
-
         <div class="nav-bar__brand">
           <router-link to="/home" class="nav-bar__logo-link" aria-label="美恺装饰">
             <img :src="logoImg" alt="" class="nav-bar__logo-mark" />
@@ -25,12 +15,19 @@
           </router-link>
         </div>
 
+        <div class="nav-bar__links">
+          <router-link class="nav-bar__link" to="/">网站首页</router-link>
+          <router-link class="nav-bar__link" to="/store">品牌店装</router-link>
+          <router-link class="nav-bar__link" to="/business">商务办公</router-link>
+          <router-link class="nav-bar__link" to="/residential">精品家装</router-link>
+        </div>
+
         <div class="nav-bar__cta">
           <router-link class="nav-bar__contact" to="/about">关于美恺</router-link>
-          <router-link class="nav-bar__estimate" to="/contact">
+          <a class="nav-bar__estimate" href="javascript:void(0)" role="button" @click="openChat">
             <PaperPlaneIcon class="nav-bar__estimate-icon" />
             <span class="nav-bar__estimate-text">一键估价</span>
-          </router-link>
+          </a>
         </div>
       </div>
 
@@ -58,10 +55,10 @@
           </router-link>
         </div>
 
-        <router-link class="nav-bar__estimate nav-bar__estimate--toolbar" to="/contact" @click="closeMenu">
+        <a class="nav-bar__estimate nav-bar__estimate--toolbar" href="javascript:void(0)" role="button" @click="() => { closeMenu(); openChat(); }">
           <PaperPlaneIcon class="nav-bar__estimate-icon" />
           <span class="nav-bar__estimate-text">一键估价</span>
-        </router-link>
+        </a>
       </div>
 
       <div
@@ -115,10 +112,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon.vue'
+import { useChatWidget } from '@/composables/useChatWidget'
 
 import logoImg from '@/source/logo/logo.webp'
 import ziImg from '@/source/logo/zi.webp'
@@ -126,27 +124,11 @@ import ziImg from '@/source/logo/zi.webp'
 const route = useRoute()
 const menuOpen = ref(false)
 const navWrapRef = ref<HTMLElement | null>(null)
+const isScrolled = ref(false)
 
-const props = withDefaults(
-  defineProps<{
-    contrastMode?: 'normal' | 'high'
-  }>(),
-  {
-    contrastMode: 'normal',
-  },
-)
-const isHomeRoute = computed(() => route.path === '/' || route.path === '/home')
-const contrastMode = computed(() => props.contrastMode)
-
-/** 黑底导航页（非首页、非关于）：加高黑色条区域 */
-const isSolidNavBar = computed(() => {
-  const p = route.path
-  return p !== '/' && p !== '/home' && p !== '/about'
-})
-
-const navBackground = computed(() => {
-  return isHomeRoute.value || route.path === '/about' ? 'transparent' : '#000'
-})
+// 用户反馈:nav 在所有页面都默认透明,滚动 60px 后变米灰毛玻璃。
+// 原 isHomeRoute/isSolidNavBar/navBackground/contrastMode 强制非 home 页面黑底逻辑全部移除。
+const { open: openChat } = useChatWidget()
 
 watch(
   () => route.fullPath,
@@ -180,28 +162,58 @@ function onPointerDown(e: PointerEvent) {
   menuOpen.value = false
 }
 
+function onScroll() {
+  isScrolled.value = window.scrollY > 60
+}
+
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
   window.addEventListener('pointerdown', onPointerDown)
+  window.addEventListener('scroll', onScroll, { passive: true })
+  onScroll()
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
   window.removeEventListener('pointerdown', onPointerDown)
+  window.removeEventListener('scroll', onScroll)
 })
 </script>
 
 <style scoped>
 .nav-bar {
-  position: sticky;
+  /* 全局 fixed:任何页面任何滚动位置都浮在视口顶部 */
+  position: fixed;
   top: 0;
-  z-index: 50;
-  width: min(96%, 1280px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  width: 100%;
   flex-shrink: 0;
   background: transparent;
-  padding: 8px 0 11px;
-  border-radius: 0 0 20px 20px;
-  margin: 0 auto;
+  padding: 10px 0 12px;
+  margin: 0;
+  transition: background-color 0.4s ease, backdrop-filter 0.4s ease, box-shadow 0.4s ease, padding 0.3s ease;
+}
+
+/* v2 风格 scrolled 状态:滚动 60px 后米灰半透明 + 毛玻璃 + 链接转墨黑 */
+.nav-bar--scrolled {
+  background: rgba(245, 242, 236, 0.92) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08), 0 6px 24px rgba(0, 0, 0, 0.05);
+  padding: 6px 0 8px;
+}
+.nav-bar--scrolled .nav-bar__links { color: #1a1a1a !important; }
+.nav-bar--scrolled .nav-bar__contact { color: #1a1a1a !important; }
+.nav-bar--scrolled .nav-bar__contact::after { border-color: #1a1a1a !important; }
+/* scrolled 状态下汉堡按钮 — 用透明底 + 墨黑线条,避免灰黑块在米灰底突兀(用户反馈) */
+.nav-bar--scrolled .nav-bar__burger {
+  background: transparent !important;
+  color: #1a1a1a !important;
+}
+.nav-bar--scrolled .nav-bar__burger:hover {
+  background: rgba(196, 30, 58, 0.08) !important;
 }
 
 .nav-bar--contrast-normal {
@@ -222,11 +234,15 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: stretch;
   gap: 0;
-  max-width: 1080px;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0 8px;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  /* 留出舒适的左右 margin,但不像之前 max-width:1080 那样太窄(用户反馈持续调) */
+  padding: 0 clamp(32px, 5vw, 80px);
   box-sizing: border-box;
+}
+@media (max-width: 768px) {
+  .nav-bar__wrap { padding: 0 20px; }
 }
 
 .nav-bar__desktop {
@@ -234,29 +250,45 @@ onUnmounted(() => {
   width: 100%;
   align-items: center;
   box-sizing: border-box;
-  /* 左右栏等宽占位，中间 logo 相对整条导航水平居中 */
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  column-gap: 18px;
+  /* 重排:左 logo / 中 links(自动撑大) / 右 CTA */
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  column-gap: 24px;
 }
 
 .nav-bar__links {
-  justify-self: start;
+  justify-self: center;
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 14px;
-  font-family:
-    'Manrope',
-    'Noto Sans JP',
-    system-ui,
-    sans-serif;
-  font-size: 16px;
-  font-weight: 400;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: clamp(12px, 2vw, 28px);
+  font-family: 'Noto Sans SC', system-ui, sans-serif;
+  font-size: clamp(13px, 1.1vw, 16px);
+  font-weight: 500;
   line-height: 1.2;
   color: #fff;
-  letter-spacing: -0.14px;
+  letter-spacing: 0.08em;
   white-space: nowrap;
+  overflow: hidden;
 }
+
+.nav-bar__link {
+  position: relative;
+  padding: 6px 2px;
+  transition: opacity 0.3s ease;
+}
+.nav-bar__link::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s cubic-bezier(0.2, 0.85, 0.3, 1);
+}
+.nav-bar__link:hover::after { transform: scaleX(1); }
 
 .nav-bar--contrast-high .nav-bar__links,
 .nav-bar--contrast-high .nav-bar__contact {
@@ -283,32 +315,32 @@ onUnmounted(() => {
 }
 
 .nav-bar__brand {
-  justify-self: center;
+  justify-self: start;
   flex-shrink: 0;
 }
 
 .nav-bar__logo-link {
   position: relative;
   display: flex;
-  height: 64px;
-  width: 228px;
+  height: 56px;
+  width: 200px;
   align-items: center;
-  padding-left: 8px;
+  padding-left: 0;
   box-sizing: border-box;
   text-decoration: none;
 }
 
 .nav-bar__logo-mark {
-  width: 68px;
-  height: 64px;
+  width: 56px;
+  height: 52px;
   flex-shrink: 0;
   object-fit: contain;
   pointer-events: none;
 }
 
 .nav-bar__logo-word {
-  width: 132px;
-  height: 64px;
+  width: 120px;
+  height: 52px;
   flex-shrink: 0;
   object-fit: contain;
   pointer-events: none;
@@ -320,7 +352,7 @@ onUnmounted(() => {
   flex-shrink: 0;
   align-items: center;
   justify-content: flex-end;
-  gap: 16px;
+  gap: 10px;
 }
 
 .nav-bar__contact {
@@ -328,8 +360,11 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 16px;
-  border-radius: 20px;
+  box-sizing: border-box;
+  height: 36px;
+  min-width: 96px;
+  padding: 0 14px;
+  border-radius: 999px;
   font-family:
     'Manrope',
     'Noto Sans JP',
@@ -350,35 +385,39 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   border: 2px solid #fff;
-  border-radius: 20px;
+  border-radius: 999px;
   pointer-events: none;
 }
 
 .nav-bar__estimate {
   display: inline-flex;
-  height: 34px;
-  width: 112px;
+  height: 36px;
+  min-width: 96px;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 5px;
+  padding: 0 14px;
   box-sizing: border-box;
-  border-radius: 32px;
-  background: #ff5449;
-  font-family:
-    'Inter',
-    'Noto Sans JP',
-    'Noto Sans SC',
-    system-ui,
-    sans-serif;
+  /* 圆弧 pill 形(用户指定) */
+  border-radius: 999px;
+  background: #c41e3a;
+  font-family: 'Noto Sans SC', system-ui, sans-serif;
   font-size: 13px;
-  font-weight: 700;
-  font-style: normal;
-  line-height: normal;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1;
   color: #fff;
   text-decoration: none;
   white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(196, 30, 58, 0.32), inset 0 0 0 1px #8b1424;
+  transition: background-color 0.3s ease, transform 0.3s cubic-bezier(0.2, 0.85, 0.3, 1.05),
+              box-shadow 0.3s ease;
+}
+.nav-bar__estimate:hover {
+  background: #8b1424;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(196, 30, 58, 0.4), inset 0 0 0 1px #8b1424;
 }
 
 .nav-bar__estimate-icon {
@@ -394,11 +433,10 @@ onUnmounted(() => {
   display: block;
   line-height: 1;
   transform: translateY(0.5px);
+  padding-bottom: 2px;
 }
 
-.nav-bar__estimate:hover {
-  filter: brightness(1.05);
-}
+/* hover 已在 .nav-bar__estimate 主规则中处理(背景+位移+阴影) */
 
 /* —— 移动端顶栏与抽屉 —— */
 .nav-bar__mobile-bar {
@@ -531,7 +569,7 @@ onUnmounted(() => {
 
 @media (min-width: 901px) {
   .nav-bar {
-    width: min(96%, 1280px);
+    width: 100%;
   }
 
   .nav-bar__wrap {
@@ -544,11 +582,58 @@ onUnmounted(() => {
 
   .nav-bar__desktop {
     display: grid;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+    column-gap: clamp(12px, 2vw, 24px);
   }
 
   .nav-bar__mobile-bar,
   .nav-bar__mobile-drawer {
     display: none !important;
+  }
+}
+
+/* 901–1120px：进一步收紧，避免链接与 CTA 重叠 */
+@media (min-width: 901px) and (max-width: 1120px) {
+  .nav-bar__wrap {
+    padding: 0 clamp(16px, 3vw, 32px);
+  }
+
+  .nav-bar__logo-link {
+    width: 176px;
+    height: 48px;
+  }
+
+  .nav-bar__logo-mark {
+    width: 48px;
+    height: 44px;
+  }
+
+  .nav-bar__logo-word {
+    width: 104px;
+    height: 44px;
+  }
+
+  .nav-bar__links {
+    gap: 10px;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+
+  .nav-bar__link {
+    padding: 6px 0;
+  }
+
+  .nav-bar__contact,
+  .nav-bar__estimate {
+    height: 34px;
+    min-width: 88px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .nav-bar__estimate-icon {
+    width: 12px;
+    height: 12px;
   }
 }
 
@@ -563,8 +648,7 @@ onUnmounted(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nav-bar__estimate:hover {
-    filter: none;
-  }
+  .nav-bar__estimate:hover { transform: none; }
+  .nav-bar__link::after { transition: none; }
 }
 </style>

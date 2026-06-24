@@ -56,9 +56,12 @@ export async function streamChat(opts: ChatStreamOptions): Promise<void> {
   while (true) {
     const { value, done } = await reader.read()
     if (done) break
-    buf += decoder.decode(value, { stream: true })
+    // WHY \r\n → \n 归一化:sse_starlette 默认按 SSE 标准用 CRLF 行结束(字节级是
+    // 0d0a0d0a 分帧),前端如果只 indexOf('\n\n') 等价于找 0a0a 子串,在 0d0a0d0a
+    // 中找不到 → 永远 detect 不到帧结束 → onEvent 永不触发 → 气泡永远空白。
+    // 实测复现:浏览器 fetch 收到的 buf 就是 0d0a0d0a。归一后用 \n\n 分帧就对了。
+    buf += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n')
 
-    // SSE 帧以空行分隔
     let idx = buf.indexOf('\n\n')
     while (idx >= 0) {
       const frame = buf.slice(0, idx)

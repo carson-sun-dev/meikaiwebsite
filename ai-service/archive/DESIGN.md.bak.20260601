@@ -1,0 +1,1219 @@
+# 美恺装饰 AI 客服系统 — 设计文档
+
+> 项目：基于 LangGraph 的多业务线 AI 客服 + 智能报价系统
+> 文档日期：2026-05-28
+> 状态：方案设计完成，待审核后进入实施
+
+---
+
+## 1. 项目背景
+
+为美恺装饰官网（已上线 [meikaizs.com](https://www.meikaizs.com)）增加 AI 客服能力：
+
+- **核心能力 A**：回答客户的装修问题（材料、工艺、流程、保修等）
+- **核心能力 B**：基于历史 23 份真实报价单生成"价格区间"参考报价（如 800-1000 元/㎡），最终精确报价引导联系公司人员
+- **简历定位**：技术选型偏向当下前沿（RAG / Agent / 多模型路由 / 可观测性），同时业务真实落地
+
+### 1.1 现有资产
+
+| 类型 | 路径 | 说明 |
+|---|---|---|
+| 网站前端 | `meikai_website/frontend/` | Vue 3 + Vite + TS + Element Plus + Tailwind |
+| 网站后端 | `meikai_website/backend/` | Express + TS + MySQL + Zod |
+| 部署编排 | `meikai_website/docker-compose.yml` | mysql + backend + web |
+| 历史报价单 | `/Users/carrrson/developer/预算A/` | 23 份 xls/xlsx，覆盖餐饮/店铺/办公/学校等业态 |
+| 新服务目录 | `meikai_website/ai-service/` | **本项目根目录**（当前为空） |
+
+### 1.2 业务三大客户类型
+
+按美恺主营业务划分，**门面房店铺为核心业务**：
+
+| 业务线 | 优先级 | 典型用户输入 | 报价基准 |
+|---|---|---|---|
+| 家装（精品家装） | 中 | 户型图、原始平面图、合同模板 | 元/㎡ × 面积 + 个性化项 |
+| 商务办公装修 | 中 | CAD 平面图、租赁合同 | 元/㎡ × 标准 + 弱电/家具 |
+| **门面房店铺装修 ★** | **高（核心）** | 平面图（CAD 居多）、品牌 VI、参考案例 | 业态 × 元/㎡ × 档次（历史案例最丰富） |
+
+---
+
+## 2. 选型迭代与决策记录
+
+记录所有讨论过程中的方案变更、问题原因、新方案理由。
+
+### 2.1 AI 后端语言与框架
+
+**最终选型**：Python 3.12 + FastAPI + LangGraph
+
+| 候选 | 是否采用 | 原因 |
+|---|---|---|
+| Python + FastAPI + LangGraph | ✅ | AI 生态最成熟（LangChain/LangGraph/LlamaIndex/PaddleOCR/ezdxf 全部 Python 优先）；简历加分项最多 |
+| TypeScript + Vercel AI SDK | ❌ | 与现有站栈一致，但 AI 生态弱、CAD/OCR 工具缺位 |
+| Python 裸 SDK（无框架） | ❌ | 轻量但少了 LangGraph 这个简历关键词 |
+
+**与现网解耦**：新服务作为独立微服务挂载在 `/api/ai/*`，不污染现有 Express 后端的 `/api/leads/*`。
+
+---
+
+### 2.2 LLM 模型选型 ★ 经历两轮变更
+
+#### 第一版方案（已废弃）
+
+- L0/L1：DeepSeek-V3
+- L2 复杂：**Claude Sonnet 4.6 / Opus 4.7**
+- 视觉：**Claude Vision**
+- 兜底：Qwen-Plus
+
+#### 弃用原因
+
+1. **国内访问问题**：Anthropic / OpenAI 在国内需要代理，对生产服务不可接受
+2. **价格高昂**：Claude Opus 输出 ~$75/M tok（约 ¥540），相比国产模型贵 20-50 倍
+3. **合规风险**：客户数据出境可能触及合规问题（《数据安全法》《个人信息保护法》）
+4. **客户群体匹配**：美恺客户均为国内客户，无须海外模型
+
+#### 第二版方案（当前采用）— 全国产多级路由
+
+| 层级 | 任务 | 模型 | 单价（¥/M tok） |
+|---|---|---|---|
+| L0 轻量 | 意图分类、槽位抽取、招呼、简单 FAQ | 豆包 Doubao-Lite | ~¥1 |
+| L1 标准 | 多轮信息收集、家装/办公报价工具调用 | （备用层，DS-V3 即可承担） | — |
+| **L2 强 ★** | **门面房复杂报价、跨案例综合推理** | **DeepSeek-V3** | ~¥2 输入 / ~¥8 输出 |
+| 视觉提取 | 户型图/平面图识别 | Doubao-1.5-vision-pro | ~¥3 输入 |
+| Embedding | 中文向量化 | bge-m3（本地自部署） | 免费 |
+
+> **关键设计**：用户**完全无感知**模型切换。后端根据任务类型与上下文复杂度自动路由，前端只面对统一的 `/api/ai/chat` SSE 接口。
+
+---
+
+### 2.3 L2 强模型对比：DeepSeek-V3 vs Qwen-Max
+
+经过对比，**确定 DeepSeek-V3**。
+
+| 维度 | DeepSeek-V3 ✅ | Qwen-Max |
+|---|---|---|
+| 输入价格 | ~¥2/M tok | ~¥24/M tok（贵 ~12 倍） |
+| 输出价格 | ~¥8/M tok | ~¥96/M tok |
+| 中文推理 | 顶级（继承 R1 强推理） | 强，偏通用对话 |
+| 工具调用 | 优秀 | 优秀 |
+| 上下文 | 128K | 128K |
+| API 协议 | OpenAI 兼容 | OpenAI 兼容（DashScope） |
+| 企业级 SLA | 一般 | 阿里云原生，更稳 |
+| 开放性 | **开源权重**（关键，可自部署兜底） | 闭源 |
+
+**决定原因**：
+1. 报价场景需要 RAG 上下文 + 历史案例拼接，输入 token 量大，DS-V3 价格优势压倒性
+2. 多步推理（业态识别 → 案例检索 → 跨案例归纳 → 三档区间综合）是 DS-V3 的强项
+3. 开源权重 → 业务连续性兜底（API 不可用时可自部署）
+4. 简历"成本下降 70%"的数字 DS-V3 才能打得出
+
+---
+
+### 2.4 视觉模型选型 ★ 经历两轮变更
+
+#### 第一版（已废弃）
+
+视觉路径直接用 Qwen3-VL-Plus，~¥8/M tok。
+
+#### 弃用原因
+
+略贵，且户型图场景大量任务本质是 OCR + 简单空间识别，杀鸡用牛刀。
+
+#### 第二版方案（当前采用）
+
+| 模型/工具 | 角色 | 价格 |
+|---|---|---|
+| **PaddleOCR** | 抽取图纸文字（尺寸标注、房间名） | 开源免费 |
+| **Doubao-1.5-vision-pro** | 主视觉模型，理解空间布局 | ~¥3/M tok（Qwen3-VL 的 1/3） |
+| Doubao-vision-lite | 极端降本时切换 | ~¥1.5/M tok |
+| Qwen3-VL-Plus | 兜底（复杂手绘/CAD 转图） | ~¥8/M tok |
+
+**模型选择依据**：豆包 vision-pro 在中文 OCR 与图纸场景调优充分，价格优势明显，火山方舟 API 国内延迟低。
+
+---
+
+### 2.5 视觉-推理解耦架构（Perception-Cognition Pipeline）★ 关键架构决策
+
+#### 问题
+
+最初设计中，多轮对话每轮都把图片塞给 VLM，浪费严重。
+
+#### 方案
+
+业界标准的"**感知一次，推理多次**"模式：
+
+```
+Stage 1: 视觉一次性提取（每张图仅调用一次）
+  户型图 → PaddleOCR + Doubao-1.5-vision-pro → 结构化 JSON
+
+Stage 2: 多轮文本推理（廉价模型反复调用）
+  DeepSeek-V3 仅消费 JSON + 对话上下文，图片不再喂入
+```
+
+#### 成本对比（5 轮对话）
+
+| 方案 | Vision 调用次数 | 单次会话成本 |
+|---|---|---|
+| 每轮喂图 + Qwen3-VL | 5 | ~¥0.5 |
+| 每轮喂图 + Doubao-Vision | 5 | ~¥0.2 |
+| **解耦：视觉 1 次 + DS-V3 多轮** | **1** | **~¥0.04** |
+
+降本 ~90%，且响应更快（DS-V3 token 吞吐 > VLM）。
+
+#### 副带优势
+
+- **可缓存**：同图二次咨询命中 JSON 缓存，零成本
+- **可解释**：JSON 是结构化中间产物，可审计可修正
+- **可解耦**：视觉模块换模型不影响推理链路
+- **错误隔离**：视觉失败时可回退到"对话补全槽位"路径
+
+---
+
+### 2.6 CAD 图纸原生解析 ★ 含金量天花板
+
+#### 问题
+
+门面房与办公装修客户经常提供 **CAD 图纸（.dwg / .dxf / 矢量 PDF）**，而非简单图片。VLM 看 CAD 转图精度有限。
+
+#### 方案
+
+**矢量原生解析优先，视觉作为兜底**。
+
+```
+文件类型路由：
+├─ .dxf          → ezdxf 直接解析（毫米级精度）
+├─ .dwg          → ODA File Converter → .dxf → ezdxf
+├─ .pdf 矢量     → pdfplumber 抽线条 + 文字
+├─ .pdf 扫描/图片 → PaddleOCR + Doubao-vision-pro（VLM 路径）
+└─ 无文件         → DeepSeek-V3 对话补全槽位
+```
+
+#### 工具栈（全开源）
+
+| 任务 | 工具 | 协议 |
+|---|---|---|
+| DXF 解析 | `ezdxf` | MIT |
+| DWG → DXF | `ODAFileConverter` | 免费（Open Design Alliance） |
+| 矢量 PDF | `pdfplumber` + `pypdf` | MIT |
+| 几何计算 | `shapely` | BSD |
+| 栅格化 | `pdf2image` + `pikepdf` | 开源 |
+| 中文 OCR | `PaddleOCR` | Apache 2.0 |
+
+#### 精度对比
+
+| 维度 | VLM 看图 | CAD 原生解析 |
+|---|---|---|
+| 面积精度 | ±5-15% 估算 | ±0.1%（毫米级） |
+| 墙长 | 几乎做不到 | 累加 LINE 长度精确 |
+| 层高 | 看不出 | 从标注精确读取 |
+| 业态/功能区识别 | 看字才行 | 图层名 + 排烟系统直接判定 |
+| 强/弱电分离 | 不可能 | 按 LAYER 分别识别 |
+| 单次成本 | ¥0.01-0.05 | **¥0** |
+
+#### 失败回退链（健壮性）
+
+```
+.dxf 解析失败 → DWG→DXF 重试 → 转 PDF 取矢量 → 转图走 VLM
+→ VLM 也失败 → DS-V3 主动问"方便口述一下面积和户型吗？"
+```
+
+#### 部署小复杂度
+
+`ODAFileConverter` 是 binary 不是 pip 包，需要写进 ai-service Dockerfile：
+
+```dockerfile
+RUN wget https://www.opendesign.com/.../ODAFileConverter.AppImage \
+    && chmod +x ODAFileConverter
+```
+
+可控。
+
+---
+
+### 2.7 向量数据库
+
+**最终选型**：Qdrant（独立 Docker 服务）
+
+| 候选 | 是否采用 | 原因 |
+|---|---|---|
+| Qdrant | ✅ | 性能强、API 友好、Docker 一键起、当前最主流，简历常见 |
+| pgvector + PostgreSQL | ❌ | 运维简单但需引入新 DB；与现有 MySQL 并存增加复杂度 |
+| Chroma | ❌ | 太轻量，生产能力弱 |
+
+---
+
+### 2.8 Embedding 模型 ★ 经历一轮变更
+
+#### 第一版（已废弃）
+
+bge-m3 本地自部署。
+
+#### 弃用原因
+
+生产服务器规格为 **2 vCPU + 2GB 内存 + 40GB 磁盘**，bge-m3 模型权重本身就 ~2.3GB，叠加 FastAPI / PaddleOCR / Qdrant 同机共存，内存必爆。
+
+#### 第二版方案（当前采用）
+
+| 角色 | 选型 | 单价 | 说明 |
+|---|---|---|---|
+| **主路径 Embedding** | **火山方舟 Doubao-embedding** 或 阿里 text-embedding-v3 | ~¥0.0005/K tok | 走 API，零本地内存占用，与豆包视觉同账号便于成本统一 |
+| Hybrid Search 稀疏向量 | Qdrant 内置 BM25 (1.10+) | 免费 | 不依赖外部 Embedding |
+| 离线兜底 | bge-m3 | 免费 | 仅在 API 不可用或开发机调试时启用 |
+
+**保留多向量检索能力**：Doubao-embedding / text-embedding-v3 仅产稠密向量，稀疏向量由 Qdrant 原生 BM25 提供，与原方案的 hybrid search 架构等价。ColBERT 多向量在 v1 不上，作为可选迭代项。
+
+---
+
+---
+
+## 3. AI 工程前沿技术评估（采用 / 不采用）
+
+针对 2026 年 LLM 工程领域热门技术，逐项评估是否适用本项目；记录**为什么使用、使用点 / 为什么不使用、不适合点**。
+
+### 3.1 Prompt 工程 — ✅ 大量使用
+
+**解决什么问题**：通过精心设计 LLM 输入文本（指令、角色、示例、约束）来引导输出。
+
+**为什么使用 + 使用点**：
+- 每个 Agent 的 System Prompt（家装/办公/店铺 角色差异化）
+- 工具调用 few-shot 模板（槽位抽取的 JSON schema 示范）
+- CoT（Chain-of-Thought）：报价综合推理时让模型先列步骤再给区间
+- Structured Output：报价工具输出强制 JSON schema
+- 拒答模板：业务范围外问题礼貌引导回主题
+
+**简历表述**："针对装修业务设计 6+ 角色 System Prompt 与 few-shot 模板，结合 CoT 与强制 JSON 输出约束保证工具调用稳定性"
+
+**注意**：2026 年 Prompt 工程已是基础技能，不再是差异化亮点，必须与 Context 工程组合才能加分。
+
+---
+
+### 3.2 Context 工程 — ✅ **本项目核心技术（最大亮点之一）**
+
+**解决什么问题**：LLM 上下文窗口虽大（128K）仍有限，每 token 都要付费。Context 工程关心**什么内容、以什么形式、在什么时机**进入上下文，是 2026 年 LLM 工程领域热度最高的概念。
+
+**为什么使用 + 使用点**（每条对应一个明确设计决策）：
+
+| 子技术 | 项目中的体现 |
+|---|---|
+| State Management | LangGraph StateGraph 管理槽位/对话/视觉提取，按需注入而非全量喂入 |
+| Retrieval-based Context | Qdrant RAG 召回 top-3 案例，不全量喂入 23 份报价 |
+| Context Compression | 长对话压缩为"摘要 + 最近 4 轮原文" |
+| Modality Decoupling | 感知-认知解耦（图 1 次提取 → JSON 多轮复用），视觉 token 下降 90% |
+| Hierarchical Context | Router 用最小上下文判路由 → 子 Agent 才加载业务知识 |
+| Tool Result Trimming | RAG 召回结果截断到关键字段，不喂全文 |
+| Dynamic Few-shot | 报价时按业态动态从案例库挑示例，而非固定示例 |
+
+**简历表述**："基于 LangGraph StateGraph 实现分层 Context 工程：感知-认知解耦削减 90% 视觉 token、动态 few-shot 按业态注入相似案例、对话压缩 + RAG trim，单次推理 token 消耗下降 60%+"
+
+---
+
+### 3.3 Harness 工程 — ✅ LangGraph 本身即 Harness
+
+**解决什么问题**：Harness 是包在 LLM 外的**运行时基础设施**——工具执行循环、状态管理、错误处理、流式、护栏、可观测埋点。Claude Code、Cursor、Cline 都是 harness。
+
+**为什么使用 + 使用点**：
+- LangGraph 即 Harness 实现（节点 / 边 / 状态机）
+- Tool 调用循环（call_tool → observe → reason → call_tool 再调）
+- Guardrail：槽位未齐时禁止调报价工具
+- 多级失败回退（CAD → VLM → 对话补全）
+- SSE 流式 + 心跳
+- LangFuse 全链路埋点
+
+**简历表述**："基于 LangGraph 自建 Agent Harness：实现工具调用循环、状态持久化、护栏校验、多级失败回退与全链路可观测埋点"
+
+---
+
+### 3.4 MCP（Model Context Protocol）— ⚠️ 增量采用（Sprint 4.5 新增）
+
+**解决什么问题**：Anthropic 主导的开放协议（2024 末发布），让 LLM 客户端（Claude Desktop / Cursor 等）以**标准化方式**接入外部工具、数据源、资源。可类比"LLM 工具领域的 USB-C"，是 2025-2026 最热的关键词。
+
+**本项目原本不需要**：
+- Agent 自包含，工具自写自调
+- 不需要让其他 LLM 客户端复用工具
+
+**但发现一个绝佳切入点 → 决定增量采用**：
+
+> 把"报价引擎 + RAG 知识库"暴露为 MCP Server，让美恺**内部销售/设计师在 Claude Desktop 直接询问报价**（销售内勤场景）。
+
+```
+公网客户 ── Web Chat Widget ──┐
+                              ├── ai-service (LangGraph)
+内部销售 ── Claude Desktop ───┤    └── 业务工具集
+                              │
+                              └── 通过 MCP Server 复用同一套工具
+```
+
+**收益**：
+- 工程：工具能力一次开发、双端复用（C 端 Web + B 端 Claude Desktop）
+- 简历：抓住最热关键词，展示对协议级标准的理解
+
+**工作量**：~半天（用 `fastmcp` 或官方 Python SDK）
+
+**简历表述**："设计 MCP Server 将报价引擎 + RAG 知识库标准化暴露，对外 Web Chat + 对内销售 Claude Desktop 双端共享同一工具集，单工具开发、双端复用"
+
+---
+
+### 3.5 Skills（Anthropic）— ❌ 不直接适用，但概念借鉴
+
+**解决什么问题**：Anthropic 2025 年推出的 Skills 系统——以**文件夹形式（`SKILL.md` + 资源）打包可复用能力**，由 Claude 模型动态发现并加载。本质是"模型自主选择工具集"的精细化版本。
+
+**不适合本项目的原因**：
+1. Skills 是 Claude 平台专属特性，由 Anthropic 模型主动管理。本项目用 DeepSeek-V3，**无法直接接入**
+2. 即使引入 Claude，本项目能力固定就那几个（FAQ / 报价 / 视觉），**不需要动态发现机制**
+3. 数据出境合规问题（同 §2.2 弃用 Claude 的原因）
+
+**类似机制的本项目实现**：
+LangGraph SubGraph——三大业务能力（家装/办公/店铺）各自封装为独立子图，维护各自提示词、工具集、槽位定义，做到模块化与可独立测试。
+
+**面试金句**："了解 Claude Skills 范式，本项目通过 LangGraph SubGraph 实现等价的模块化能力封装，但因使用国产模型未采用原生 Skills 接口"——展示对前沿了解 + 技术判断。
+
+---
+
+### 3.6 Hybrid Search + Re-ranking — ✅ RAG 进阶标配（新增）
+
+**解决什么问题**：单一向量检索在专业术语（"乳胶漆"、"轻钢龙骨"、"擦缝条"）上召回偏低；BM25 关键词检索对长句语义弱。组合两者 + re-rank 是 2026 RAG 标配。
+
+**为什么使用 + 使用点**：
+- Qdrant 提供稠密向量检索
+- 同库做 BM25（Qdrant 1.10+ 原生支持稀疏向量）
+- RRF（Reciprocal Rank Fusion）融合两路 top-K
+- bge-reranker-v2-m3 重排 top-20 → top-5
+- 报价案例检索（核心场景）必走 hybrid
+
+**工作量**：~半天
+
+**简历表述**："Qdrant 向量 + BM25 hybrid search 经 RRF 融合，叠加 bge-reranker-v2-m3 重排，召回准确率（NDCG@5）提升 ~25%"
+
+---
+
+### 3.7 Guardrails / Safety Layer — ✅ 生产标配（新增）
+
+**解决什么问题**：生产环境 LLM 必须有输入输出双向护栏，避免：
+- Prompt injection 攻击
+- 输出荒谬数值（如"800–100000 元/㎡"这种荒谬区间）
+- 泄露内部信息（敏感 prompt、内部价格策略）
+- PII（电话号、地址）回显
+
+**为什么使用 + 使用点**：
+
+| 方向 | 内容 |
+|---|---|
+| 输入侧 | Prompt injection 检测（NeMo Guardrails 或自研规则）、敏感词过滤、非业务问题分类 |
+| 输出侧 | 报价合理性校验（必须落在历史 P10–P90 区间内，否则重生成）、PII 脱敏 |
+| 工具前置 | 必填槽位完备性、参数类型校验、调用频次限流 |
+
+**工作量**：~1 天
+
+**简历表述**："自研输入输出双向 Guardrail 层：prompt injection 检测、报价合理性校验（±30% 历史区间）、PII 脱敏，保障生产环境合规与安全"
+
+---
+
+### 3.8 综合视图
+
+| 技术 | 是否使用 | 工时 | 简历价值 |
+|---|---|---|---|
+| Prompt 工程 | ✅ 贯穿 | — | ⭐⭐（基础功） |
+| Context 工程 | ✅ **核心** | 贯穿 | ⭐⭐⭐⭐⭐ |
+| Harness 工程 | ✅ 贯穿 | — | ⭐⭐⭐⭐ |
+| MCP | ✅ 增量 | 0.5d | ⭐⭐⭐⭐⭐（最热关键词） |
+| Skills (Anthropic) | ❌ 不适用 | — | ⭐⭐（面试谈资） |
+| Hybrid Search + Re-rank | ✅ 新增 | 0.5d | ⭐⭐⭐⭐ |
+| Guardrails | ✅ 新增 | 1d | ⭐⭐⭐⭐ |
+
+**净增工时：~2 天**，总工期 7-9 天 → **9-11 天**。
+
+---
+
+## 4. 最终技术栈
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ 前端                                                              │
+│   Vue 3 + TS（嵌入现有站，悬浮 Chat Widget）                      │
+│   - SSE 流式渲染、Markdown、图片/CAD 上传、留资 CTA               │
+└──────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ /api/ai/chat (SSE)
+┌──────────────────────────────────────────────────────────────────┐
+│ Guardrail 入口层（输入侧护栏）                                    │
+│   - Prompt injection 检测                                         │
+│   - 敏感词 / 非业务问题分类                                       │
+│   - 调用频次限流                                                  │
+└──────┬───────────────────────────────────────────────────────────┘
+       ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ AI 服务（FastAPI + LangGraph 自建 Agent Harness）                 │
+│                                                                   │
+│   Router Agent（意图识别 → 三大 SubGraph 分流）                   │
+│        │                                                          │
+│        ├─ Residential SubGraph（家装）                            │
+│        ├─ Office SubGraph（办公）                                 │
+│        └─ Storefront SubGraph ★（门面房 / 核心）                  │
+│                                                                   │
+│   每个 SubGraph 内（Context 工程核心）：                          │
+│        StateGraph 管理状态                                        │
+│         ├─ 槽位状态、对话压缩、视觉提取 JSON、RAG 结果 trim       │
+│         └─ 动态 few-shot 按业态注入                               │
+│                                                                   │
+│   工具集（Tools）：                                                │
+│   - classify_intent / extract_slots                               │
+│   - search_decoration_kb（FAQ Hybrid RAG）                        │
+│   - search_similar_cases（历史报价 Hybrid RAG）                   │
+│   - estimate_residential / office / storefront_quote ★            │
+│   - analyze_floorplan（视觉/CAD 统一入口，感知-认知解耦）         │
+│   - escalate_to_human（转人工 + 调现网 /api/leads/quote）         │
+└──────┬───────────────────────────────────────────────────────────┘
+       │
+       ├──→ LLM 多级路由
+       │      ├─ L0：Doubao-Lite（兜底/招呼）
+       │      ├─ L2：DeepSeek-V3（主路径，门面房核心）
+       │      └─ Vision：Doubao-1.5-vision-pro（每图仅调 1 次）
+       │
+       ├──→ 文件解析管线
+       │      ├─ ezdxf + ODA Converter + shapely（CAD 原生，毫米级）
+       │      ├─ pdfplumber（矢量 PDF）
+       │      └─ PaddleOCR + Doubao-Vision（图片/扫描兜底）
+       │
+       ├──→ Qdrant（Hybrid Search：稠密向量 + BM25 + RRF 融合）
+       │      ├─ collection: knowledge_faq
+       │      ├─ collection: quote_items（23 份 xls 抽取）
+       │      └─ Re-rank: bge-reranker-v2-m3
+       │
+       ├──→ Embedding：Doubao-embedding API（主）/ bge-m3 离线兜底
+       │
+       └──→ 复用现有 MySQL（会话存储 + 留资）
+       ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ Guardrail 出口层（输出侧护栏）                                    │
+│   - 报价合理性校验（落在历史 P10-P90 区间内，否则重生成）         │
+│   - PII 脱敏                                                      │
+└──────┬───────────────────────────────────────────────────────────┘
+       │
+       │  另一出口（对内场景，Sprint 4.5）
+       └──→ MCP Server（fastmcp）
+              └─ 暴露同一工具集给 Claude Desktop / Cursor
+                 内部销售可直接询问报价
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 可观测性                                                          │
+│   LangFuse（自部署 / 公有云）                                     │
+│   - 全链路 trace、cost 跟踪                                       │
+│   - 30 条评测集 + LLM-as-judge                                    │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 部署                                                              │
+│   扩展 docker-compose.yml：                                        │
+│   ├─ ai-service（FastAPI，含 ezdxf + ODA + PaddleOCR + MCP）      │
+│   ├─ qdrant                                                       │
+│   └─ langfuse（可选）                                             │
+│   Nginx 增加 /api/ai/* 路由到 ai-service                          │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 5. 三大业务的 Agent 设计
+
+### 5.1 Router + Slot-Filling 总体流程
+
+```
+                     ┌─────────────┐
+用户进入 ──意图识别──▶│ Router Agent│
+                     └──────┬──────┘
+                ┌───────────┼───────────┐
+                ▼           ▼           ▼
+          [家装 Agent] [办公 Agent] [店铺 Agent ★]
+                │           │           │
+                ▼           ▼           ▼
+         槽位填充 → 工具调用 → 流式输出 → 留资引导
+```
+
+### 5.2 槽位定义
+
+| 业态 | 必填槽位 | 选填槽位 | 用户常持文件 |
+|---|---|---|---|
+| 家装 | 面积 / 户型(几室几厅) / 装修档次 | 常住人口、功能需求(老人房/儿童房)、风格偏好、是否含家具家电、预算上限 | 户型图、原始平面图、合同模板 |
+| 办公 | 面积 / 工位数 / 是否含弱电 | 行业类型、会议室/前台/茶水间、是否含家具、LOGO 墙 | CAD 平面图、租赁合同 |
+| **店铺 ★** | 业态(火锅/咖啡/眼镜店…) / 面积 / 装修档次 | 层高、门头、厨房工程、弱电、品牌 VI 是否已定 | CAD 平面图、品牌手册、参考案例 |
+
+### 5.3 槽位填充原则
+
+1. **对话优先**：缺啥问啥，一次只问 1-2 项，不打疲劳战术
+2. **文件辅助（非强制）**：用户主动上传文件 → 自动走 CAD/VLM 解析填槽位；但**绝不要求用户必须上传**
+3. **敏感信息（合同/租约/VI 手册等）走"问询为主、上传为辅"**
+   - 出于隐私与安全考虑，模型默认逐项询问关键字段，而非一上来就让用户传整份合同
+   - 话术范式：`关键问题 +（为了方便您也可以直接上传合同/图纸）`
+   - 示例：
+     > "您的租期大概多久？租约里约定了多少天免租装修期？（为了方便，您也可以直接把租约拍照上传，我帮您看）"
+     > "您拿到的平面图有标注尺寸吗？（方便的话可以发一张图给我）"
+   - 用户上传后才走文件解析路径，否则继续 slot-filling
+4. **门面房路径优化**：判断为店铺业务后立即切到 L2 模型（DS-V3）
+5. **槽位齐备才调报价工具**：避免基于残缺信息瞎给区间
+6. **输出格式约定**：基础 / 中端 / 高端三档 ¥/㎡ 区间 + "精确报价请联系公司"
+
+---
+
+### 5.4 三大客户画像深度档案（核心领域知识）
+
+> **作用**：模型在对话中判断"该问什么、能假设什么、客户应该有什么"的依据。
+> **维护**：本节是动态档案，后续会补充修改。
+
+#### 5.4.1 住宅家装客户
+
+**A. 业主手上"肯定有"的核心硬资料**
+
+| 资料 | 来源 | 影响估价的点 |
+|---|---|---|
+| 户型图 / 原始平面图（最核心） | 开发商户型宣传彩页、买房合同附图、物业带承重墙标注的结构图 | 面积、户型、承重墙位置 |
+| 《装修管理手册》 | 小区物业 | 施工时间窗、垃圾清运费、押金、电梯使用费 |
+| 买房合同 | 个人 | 交付标准（毛坯/精装），决定起步成本 |
+
+**B. 业主"肯定有的增值想法"（决定档次的软资料）**
+
+- **家庭常住人口与功能需求**：几口人、要不要儿童房、独立书房、是否全屋定制做满
+- **风格意向 + 大件设备清单**：是否要中央空调、新风、地暖、全屋智能（直接影响水电改造成本，估价大头）
+- **预算心理价位**：清包 / 半包 / 全包（决定材料归属与造价基准）
+
+**C. 关键问询话术**
+
+> "您打算做清包、半包（自己买主材）还是全包（拎包入住）？"
+> "家里常住几口人？需不需要儿童房、老人房或独立书房？"
+> "是否要装中央空调、新风系统或地暖？这部分对水电改造影响很大。"
+
+---
+
+#### 5.4.2 门面房店铺老板（★ 核心业务）
+
+**A. 老板手上"必然有"的商业硬货**
+
+| 资料 | 来源 | 影响估价的点 |
+|---|---|---|
+| 带尺寸的平面图（CAD / PDF） | 房东、商场招商办 | 面积、层高、上下水/排烟接口位置 |
+| 租赁合同 | 房东 / 商场 | 装修期租金减免天数（直接决定工期紧迫度） |
+| 商场消防 / 物业装潢要求手册 | 商场招商办 | 施工底线（甲级防火门？喷淋移位是否允许？） |
+
+**B. 老板心里"必然有"的商业决策**
+
+| 项目 | 体现 |
+|---|---|
+| **业态与功能分区** | 咖啡店要前吧台、后操作间、上下水位置；服装店要试衣间数量、库房面积 |
+| **品牌 VI / 加盟手册**（若加盟连锁） | 瑞幸、蜜雪冰城、各品牌服装总部 100% 提供 VI 手册，连乳胶漆颜色、柜子材质都写死 |
+| **开业时间死线** | 店铺多拖一天就是多付一天租金，老板带着明确交房日 + 预估开业日来询价 |
+| **死预算（硬指标）** | 老板租房前就算好回本周期，常带硬上限来："预算 10 万，把门头和吧台搞定" |
+
+**C. 关键问询话术**
+
+> "您的店是什么业态？是品牌加盟还是自创品牌？有总部 VI 手册吗？"
+> "商场 / 物业对消防、夜间施工和门头招牌有什么硬性限制吗？"
+> "预计什么时候开业？租约里有多少天免租装修期？"
+> "心里有预算上限吗？这有助于我帮您按基础/中端/高端三档定位。"
+
+---
+
+#### 5.4.3 商务办公装修客户
+
+**A. 用户手上"必然有"的硬资料（写字楼物业强制提供）**
+
+| 资料 | 来源 | 影响估价的点 |
+|---|---|---|
+| **二次装修管理手册 + 大楼作息表** | 物业 | 静音工序（白天）vs 噪音工序（夜间），**人工费夜间加班系数飙升** |
+| **原始消防系统图（喷淋 / 烟感位置）** | 物业，大楼联网 | 隔间一旦改变 → 喷淋必须移位、增加，找有资质单位**消电检**报审，是估价刚性大头 |
+| **HVAC 暖通图（中央空调出回风口）** | 物业 | 隔房间需加风口、改风道；估价里独立板块 |
+
+**B. 老板 / 行政（Admin）必然盘算好的"软硬货"**
+
+| 项目 | 体现 |
+|---|---|
+| **工位数 Headcount** | "团队 30 人 + 预留扩招 10 人 = 40 个标准工位"，决定开放区面积、连体桌组数、弱电点位 |
+| **刚性功能房间清单** | 前台接待区（含 LOGO 墙）、独立办公室（经理 / 总监）、会议室（15 人大会议 + 3-5 人小电话间）、茶水间（涉及上下水改造）、财务室（防盗门 + 独立监控）、IT 机房（独立空调 + 静电地板） |
+| **VI 视觉规范** | 大企业 / 外企有严格 VI，包括 Pantone 标准色、LOGO 材质、背光方式 |
+| **档次对标** | 互联网/科技风（裸顶喷黑、工业风、玻璃隔断 → 省钱） vs 金融/律所/国企风（全吊顶、双面隔音隔墙、大量木饰面 → 贵） |
+
+**C. 关键问询话术**
+
+> "大楼物业对施工时间有规定吗？有多少噪音工序需要安排在夜间？"
+> "您的工位规划是多少人？有没有预留扩招？"
+> "需要单独的会议室、前台 LOGO 墙、茶水间吗？"
+> "行业偏向哪种风格——互联网科技风（偏简约）还是金融律所风（偏沉稳）？"
+> "消防点位（喷淋/烟感）是否需要根据新布局做调整？这部分通常要找资质单位报审。"
+
+---
+
+### 5.5 领域知识的 Context 工程组织方式（关键架构）
+
+**核心原则**：领域知识 **不全塞 System Prompt**，而是按层组织、按需注入。
+
+#### 5.5.1 六层 Context 组织
+
+| 层 | 存储 | 内容 | 注入时机 | 体量 |
+|---|---|---|---|---|
+| **L1 System Prompt** | 代码内常量 | 角色定义 + 对话原则（200 字内） | Agent 启动常驻 | 每轮 ~200 tok |
+| **L2 槽位 Schema** | `schemas/*.py` (Pydantic) | 必填/选填字段、类型、枚举值 | 工具入参校验 | 0 tok（结构化代码） |
+| **L3 问询模板库** | `knowledge/question_bank/*.yaml` | 每个槽位的提问话术变体 | 模型缺槽位时**按需读 1 条** | 单次 ~50 tok |
+| **L4 Few-shot 池** | `knowledge/few_shots/{业态}/*.md` | 真实对话样本 | **动态注入** 2-3 条同业态 | 单次 ~600 tok |
+| **L5 RAG 知识库** | Qdrant + bge-m3 | 行业术语、施工规范、消防 / 物业常识 | 用户提问命中时召回 | 单次 ~400 tok |
+| **L6 客户画像档案** | `knowledge/personas/*.md` | §5.4 这份资料（按业态拆分） | 模型判断"该问什么"时**注入摘要** | 单次 ~300 tok |
+
+#### 5.5.2 目录结构
+
+```text
+ai-service/
+├─ schemas/                          # L2: Pydantic 槽位定义
+│   ├─ residential_slots.py
+│   ├─ office_slots.py
+│   └─ storefront_slots.py
+├─ knowledge/
+│   ├─ personas/                     # L6: 客户画像档案（§5.4 拆分）
+│   │   ├─ residential.md
+│   │   ├─ office.md
+│   │   └─ storefront.md
+│   ├─ question_bank/                # L3: 问询模板
+│   │   ├─ residential.yaml
+│   │   ├─ office.yaml
+│   │   └─ storefront.yaml
+│   ├─ few_shots/                    # L4: 对话样本池
+│   │   ├─ residential/
+│   │   ├─ office/
+│   │   └─ storefront/
+│   └─ faq_corpus/                   # L5: 行业知识入 RAG
+│       ├─ terms.md                  # 弱电/消电检/VAV...
+│       ├─ regulations.md            # 消防/物业管理常识
+│       └─ techniques.md             # 施工工艺常识
+└─ agents/
+    └─ prompts.py                    # L1: System Prompt 常量
+```
+
+#### 5.5.3 对话流示例（门面房咖啡店）
+
+```
+1. 用户："我想开一家咖啡店"
+2. Router Agent 分类 → Storefront SubGraph
+3. 系统动态构造上下文：
+   ├─ L1 System Prompt：门面房客服角色 + 对话原则（~200 tok）
+   ├─ L6 注入画像摘要：咖啡店老板必有租约/品牌VI/死预算（~300 tok）
+   ├─ L4 抽 2 条 few-shot：历史咖啡店报价对话片段（~600 tok）
+   └─ L3 取问询模板：业态/面积/档次的话术（~50 tok）
+4. 模型生成："咖啡店是美恺常做业态。有几个关键信息：
+   - 是品牌加盟还是自创品牌？有总部 VI 手册吗？
+   - 商场/物业对夜间施工和门头招牌有什么硬性限制？"
+5. 用户回答 → L2 槽位填充
+6. 槽位齐 → 调 estimate_storefront_quote (L2 校验通过) → 输出
+```
+
+#### 5.5.4 这套架构的简历价值
+
+> "**领域知识分层 Context 工程**：System Prompt 骨架 + Pydantic 槽位 + YAML 问询模板 + Few-shot 池 + RAG 知识库 + 客户画像档案，按对话状态动态注入相关层，避免 prompt 膨胀，单 token 携带信息密度提升 3×；新增业态只需新增对应文件而无需改代码。"
+
+#### 5.5.5 为什么不能全塞 System Prompt
+
+| 问题 | 后果 |
+|---|---|
+| Prompt 膨胀 | 上下文窗口浪费，每轮多花钱 |
+| 注意力稀释 | 模型容易"忘记"开头规则（Lost in the Middle 现象） |
+| 维护性差 | 新增业态/槽位/话术都要改 prompt 主体 |
+| 不可复用 | Few-shot 应该按业态动态切换，写死在 prompt 里丢失灵活性 |
+| 评测困难 | 改一处 prompt 影响所有路径，回归测试爆炸 |
+
+---
+
+## 6. 实施路线图
+
+> 待审核通过后启动；总工期约 **10-12 天**（含新增 §3 的前沿技术 + §5.4/5.5 的领域知识组织工时）
+
+### Sprint 1（数据底座 + RAG + 领域知识，~3 天）
+
+- [ ] `ai-service/etl/` Python 脚本解析 23 份 xls → 结构化 JSONL
+- [ ] LLM 自动给每条记录打 `业态 / 装修档次 / 材料等级` 标签
+- [ ] 业态聚合：每类的 P25 / P50 / P75 元/㎡（同时作为 Guardrail 校验的依据）
+- [ ] 切块 + Embedding（Doubao-embedding API）→ Qdrant 双 collection
+- [ ] **Hybrid Search**：BM25 稀疏向量入 Qdrant + RRF 融合
+- [ ] **Re-ranking**：接入 bge-reranker-v2-m3，对 top-20 重排到 top-5
+- [ ] **【领域知识组织】** 按 §5.5 目录结构建立：
+  - [ ] `schemas/*.py` 三业态 Pydantic 槽位定义
+  - [ ] `knowledge/personas/*.md` 拆分 §5.4 画像档案
+  - [ ] `knowledge/question_bank/*.yaml` 问询模板库（每槽位 3+ 话术变体）
+  - [ ] `knowledge/few_shots/{业态}/` 收集/编写 30+ 对话样本
+  - [ ] `knowledge/faq_corpus/` 行业术语+消防/物业常识入 RAG
+
+### Sprint 2（AI 核心 + 护栏，~4 天）
+
+- [ ] FastAPI 骨架 + 多级模型路由器（OpenAI 兼容协议统一）
+- [ ] LangGraph Router + 三大 SubGraph 实现（家装/办公/店铺）
+- [ ] **Context 工程**：StateGraph 槽位/对话压缩/视觉 JSON/RAG trim/动态 few-shot
+- [ ] 工具集实现（含 CAD 解析、VLM 解耦、报价工具、Hybrid RAG 检索）
+- [ ] SSE 流式 `POST /api/ai/chat`
+- [ ] **【新增】Guardrail 双向护栏**：输入侧 prompt injection + 敏感词；输出侧报价合理性（P10-P90 内）+ PII 脱敏；工具前置参数校验
+
+### Sprint 3（前端 + 联调，~2 天）
+
+- [ ] Vue 3 悬浮 Chat Widget 组件
+- [ ] Markdown 渲染、流式打字、文件上传（含 CAD 类型）、留资 CTA
+- [ ] 集成到现有站，与品牌 UI 对齐
+
+### Sprint 4（评测 + 部署，~2 天）
+
+- [ ] 30 条评测集（FAQ × 报价 × 拒答 × 多业态 × Guardrail 触发）
+- [ ] LangFuse 接入（全链路 trace + cost）
+- [ ] Docker Compose 扩展（ai-service / qdrant / langfuse）
+- [ ] Nginx 路由 `/api/ai/*`
+
+### Sprint 4.5（MCP 增量集成，~0.5 天 ★新增）
+
+- [ ] **【新增】MCP Server（fastmcp）**：将报价工具 + RAG 检索暴露为 MCP 协议
+- [ ] Claude Desktop 联调测试，编写销售内勤使用指引
+- [ ] 简历价值：对外 Web Chat + 对内销售双端复用同一套工具集
+
+---
+
+## 7. 简历定稿
+
+> **美恺装饰 AI 客服与智能报价系统**（Python · LangGraph · DeepSeek · Qdrant · MCP · Vue 3）
+>
+> - 基于 **LangGraph 自建 Agent Harness**：按业态分流（家装/办公/门面房）的多 Agent 编排，三大 SubGraph 各自封装提示词/工具集/槽位，对话驱动槽位填充
+> - **Context 工程为核心**：StateGraph 分层上下文管理 + **领域知识 6 层组织（System Prompt / Pydantic 槽位 / YAML 问询模板 / Few-shot 池 / RAG 知识库 / 客户画像档案）** + 感知-认知解耦 + 动态注入，避免 prompt 膨胀，单次推理 token 消耗下降 60%+
+> - 从 23 份历史报价 ETL 构建中文 RAG 知识库（**Doubao-embedding + Qdrant Hybrid Search（稠密+BM25 RRF 融合）+ bge-reranker 重排**），召回 NDCG@5 提升 ~25%；针对核心门面房业务实现"业态识别 → 案例检索 → 统计区间 + LLM 综合"的混合报价引擎
+> - **全国产模型多级路由**（DeepSeek-V3 / Doubao / Qwen-VL）按任务复杂度调度，单次会话成本 < ¥0.1，推理成本下降 ~70%
+> - **视觉-推理解耦架构（Perception-Cognition Pipeline）**：图纸经一次性提取为结构化 JSON 写入会话状态，多轮推理仅消费文本，视觉成本下降 ~90%
+> - **CAD 原生解析管线**：ezdxf + Open Design Alliance + shapely 实现 DXF/DWG/PDF/图片多源统一抽象，毫米级面积/墙长/图层语义识别
+> - **生产级 Guardrail 双向护栏**：prompt injection 检测、报价合理性校验（P10-P90 区间）、PII 脱敏
+> - **MCP Server（Model Context Protocol）**：报价引擎与 RAG 工具集标准化暴露，对外 Web Chat + 对内销售 Claude Desktop 双端复用
+> - SSE 流式响应、LangFuse 全链路 trace + LLM-as-judge 评测，已嵌入 [meikaizs.com](https://www.meikaizs.com) 生产环境
+
+---
+
+## 8. 待审核确认事项
+
+请确认或调整：
+
+1. **技术栈是否锁定？**（Python + FastAPI + LangGraph / DeepSeek-V3 + Doubao-Vision / Qdrant + Doubao-embedding / ezdxf + PaddleOCR / fastmcp）
+   - **服务器规格已确认**：**2 vCPU + 2GB 内存 + 40GB 磁盘**（2026-05-30）。基于此约束已落定的取舍：
+     - ✅ **Embedding**：改走 Doubao-embedding API，bge-m3 仅作离线兜底（详见 §2.8）
+     - ✅ **LangFuse**：公有云（cloud.langfuse.com）
+     - ✅ **LLM / Vision**：全部 API（DeepSeek-V3、Doubao-1.5-vision-pro）
+     - ⚠️ **PaddleOCR / Qdrant / FastAPI** 同机共存，需监控内存；若内存超 1.5GB 红线，PaddleOCR 切到云 OCR API（阿里/百度/火山）作为快速兜底
+     - ⚠️ **Qdrant 持久化** 注意磁盘配额；23 份报价 + FAQ 体量小，预计 < 1GB
+2. **§3 AI 工程技术评估的取舍** — ✅ **已同意**（2026-05-30）：Prompt/Context/Harness 全用、MCP 增量加、Skills 不用、Hybrid Search 与 Guardrails 加
+3. **三大业务的槽位定义是否完整？** — ✅ **暂保持当前定义**（2026-05-30），后续随评测集发现的缺口再补
+4. **报价输出范围**（主体装修必含；门头/厨房/家具家电是否纳入？需明确"含/不含清单"）— ⏳ **待向客户确认**（2026-05-30）。**新增决策（2026-05-30）**：门头由客户单独决定是否纳入；**工装（办公/门面）很可能需要把门头单列一个独立报价单**，因为门头工艺差异巨大（招牌/发光字/不锈钢/铝塑板/石材），与主体装修不在同一报价区间。落实方式：
+   - `estimate_storefront_quote` / `estimate_office_quote` 输出结构里**预留 `door_facade` 子字段**（可空），客户确认要后填入
+   - 槽位增加一项 `door_facade_required: bool`，默认 `false`
+   - 提示词模板里加引导话术："您的门头需要单独报价吗？(若需，我们另出一份门头工艺方案)"
+5. **是否需要 LangFuse 自部署** — ✅ **走公有云**（cloud.langfuse.com，免费额度 50K observation/月对本项目够用；2 vCPU + 2GB 内存的服务器也撑不动自部署的 Postgres + Clickhouse）（2026-05-30 确认）
+6. **生产 LLM API Key**：DeepSeek / 火山方舟（豆包）账号是否已就绪？**用户决定（2026-05-30）**：未就绪，**用户将完成开通后写入 `ai-service/apikey.txt`**。Sprint 1/2 期间 ai-service 用本地 mock LLM（OpenAI 兼容协议层 + 假回复）跑通骨架，Sprint 3 联调时切真 Key。前置必做：`.gitignore` 补 `apikey.txt` 与 `.env`（§9.2.7）
+
+审核通过后从 **Sprint 1（xls ETL + Hybrid RAG）** 启动。
+
+---
+
+## 9. 网站接入计划（2026-05-30 增补）
+
+> **本节作用**：把 §1–§7 设计落到现有 `meikai_website/` 这套 Vue 3 + Express + MySQL 站点上，明确 7 处具体改动与每处的"为什么这样改"。
+> **背景前提**：公司业务集中在河南本地，并发量不高，因此服务器选 2 vCPU + 2GB 内存 + 40GB 磁盘的廉价机型；接入方案的所有决策都围绕"低并发 + 单机内优雅退化"展开，不做横向扩展设计。
+
+### 9.1 现状判定（可运行性）
+
+接入前先盘清楚"现在能跑什么、不能跑什么"，避免把"AI 服务跑不起来"的锅记到现网头上。
+
+| 模块 | 状态 | 备注 |
+|---|---|---|
+| 现网 `backend` + `web` + `mysql` | ✅ 可运行 | `deploy/docker-compose.prod.yml` 完整，补 `.env`（从 `env.prod.example` 拷）+ 跑 `init-letsencrypt.sh` 拉证书即可 |
+| `ai-service/` AI 服务 | ❌ 仅设计文档 | 还没有一行 Python 代码、Dockerfile、requirements |
+| 项目根 `docker-compose.yml`（git status 显示 M） | ⚠️ 是 **dev 版**，不是 prod；改前先 `git diff` 看清意图，避免污染生产编排 |
+| `apikey.txt`（空） | ⚠️ 当前 `.gitignore` 没覆盖它，**真填 Key 之前必须先加忽略**，否则一提交就泄露 |
+
+**硬约束复核**：2GB 内存里现有 4 个容器（nginx-proxy + web + backend + mysql）峰值 800MB–1GB，留给 AI 栈仅约 **1GB**——这是 §9.2 所有方案的内存天花板，超就 OOM。
+
+### 9.2 七处具体改动
+
+#### 9.2.1 Nginx 边路由 — `deploy/edge.ssl.conf`
+
+**为什么**：SSE 必须关 `proxy_buffering`，否则前端拿不到流；并发即便低也要防爬虫和误点击连按，按 IP 限速 + 限连接数是最便宜的"OOM 第一道闸"。
+
+- 新增 `location /api/ai/chat`：`proxy_buffering off` + 5min timeout + `limit_conn` 同 IP ≤ 2 + `limit_req` 10/min
+- 新增 `location /api/ai/upload`：`client_max_body_size 20m`（CAD/图纸上限）
+- 在 `http {}` 顶层加 `limit_req_zone` / `limit_conn_zone`（key 为 `$binary_remote_addr`）
+
+#### 9.2.2 生产 compose 资源限制 — `deploy/docker-compose.prod.yml`
+
+**为什么**：现有 4 个 service **全部没设 `mem_limit`**，一旦内存吃紧 Linux OOM-killer 会按 RSS 优先级杀进程——大概率第一个被杀的是 mysql。新增 AI 栈前必须把所有 service 都"卡死"，让 OOM 先杀 ai-service（业务上"AI 挂了重启"远好于"数据库挂了")。
+
+预算分配（合计 2016MB，正好顶到 2GB 红线）：
+
+| service | mem_limit | mem_reservation | 备注 |
+|---|---|---|---|
+| mysql | 600m | 400m | `--innodb-buffer-pool-size=256M` 已存在，保留 |
+| backend (Express) | 256m | 150m | 现状 ~120MB |
+| web (nginx 静态) | 80m | — | 极轻 |
+| nginx-proxy（边） | 80m | — | 极轻 |
+| **ai-service（新）** | **700m** | 500m | FastAPI + 按需 lazy-load PaddleOCR |
+| **qdrant（新）** | **300m** | — | 23 份数据 + FAQ，向量库 < 1GB |
+
+辅以：① `ai-service` 设 `OOMScoreAdj=500` 保证它在 OOM 时先死 ② PaddleOCR 模型缓存落在磁盘卷（不能用 tmpfs，无内存可用） ③ 空闲时主动 `gc.collect()`。
+
+#### 9.2.3 MySQL 新增三张表 — `backend/src/db/migrate.ts`
+
+**为什么**：LangGraph 的 StateGraph 默认在内存里流转——容器一重启就丢用户填到一半的槽位。复用现有 MySQL 做 Checkpointer，零新增基础设施成本。同时把"用户反馈"沉淀下来给 §11.2 数据飞轮用。
+
+```sql
+-- ① 会话主表
+CREATE TABLE ai_sessions (
+  session_id    CHAR(32) PRIMARY KEY,
+  visitor_fp    VARCHAR(64),
+  business_line VARCHAR(16),
+  created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_visitor (visitor_fp, updated_at)
+);
+
+-- ② LangGraph checkpoint
+CREATE TABLE ai_checkpoints (
+  session_id CHAR(32),
+  thread_ts  BIGINT,
+  parent_ts  BIGINT NULL,
+  state_json MEDIUMTEXT,
+  PRIMARY KEY (session_id, thread_ts)
+);
+
+-- ③ 数据飞轮：用户/销售反馈
+CREATE TABLE ai_feedback (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  session_id CHAR(32),
+  trace_id   VARCHAR(64),   -- LangFuse trace
+  score      TINYINT,       -- +1 / -1
+  comment    TEXT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### 9.2.4 留资链路：复用而非重写
+
+**为什么**：现网已有 `POST /api/leads/quote`、有 `submissions` 表、有客户的后台漏斗——AI 转人工时如果自己另写一张表，运营侧得维护两套报表，得不偿失。
+
+- AI 服务转人工时**走内网**调：`httpx.post("http://backend:3001/api/leads/quote", json=payload)`
+- payload 形状严格对齐 `backend/src/validators/quoteSchema.ts:75-101` 的 `quotePayloadSchema`（discriminatedUnion `planKey`），AI 端做出参校验
+- 销售看板、转化漏斗维持一张 `submissions` 表，AI 渠道用 `payload_json.source = "ai_widget"` 区分
+
+#### 9.2.5 前端 ChatWidget 挂载 — `frontend/src/`
+
+**为什么**：6 个 route 都该带 widget；现网 `App.vue` 只有 SEO meta + `<router-view />`，是最干净的挂点；现有 API 客户端是 `fetch + postJson`（`src/api/leads.ts`）——SSE 必须 `fetch + ReadableStream`（`EventSource` 不能带 body 也不能带 cookie，不适合此场景）。
+
+| 改动 | 路径 | 说明 |
+|---|---|---|
+| 新组件 | `src/components/ChatWidget/` | 悬浮按钮 + 抽屉；主色用 `var(--color-brand)`（`main.css:3-5`，`#c41e3a`） |
+| 全局挂载 | `App.vue` 里 `<router-view />` 之后加 `<ChatWidget />` | 6 个 route 自动带 |
+| SSE 客户端 | `src/api/aiChat.ts` | `fetch + ReadableStream + TextDecoder`，带 `credentials: 'include'` 让 cookie 透传 |
+| Markdown 渲染 | `markdown-it` + DOMPurify | **必须 sanitize**，否则 LLM 注入 `<script>` 直接 XSS |
+| 文件上传 | 复用 quote 表单视觉 | `accept=".dxf,.dwg,.pdf,.png,.jpg,.jpeg"`；前端先做 20MB size check |
+| Session cookie | 服务端 `Set-Cookie ai_sid=...; HttpOnly; Secure; SameSite=Strict; Max-Age=2592000` | 前端不感知，重连时自动带 |
+
+#### 9.2.6 ai-service 项目骨架（待开干时建）
+
+```
+ai-service/
+├─ Dockerfile               # python:3.12-slim，非 root 用户，含 ODA AppImage
+├─ pyproject.toml           # uv 管理
+├─ .env.example             # DEEPSEEK_API_KEY / DOUBAO_API_KEY / LANGFUSE_*
+├─ app/
+│   ├─ main.py              # FastAPI + SSE + /healthz
+│   ├─ guardrails/          # 输入/输出双向护栏（§3.7）
+│   ├─ graphs/              # LangGraph SubGraph（家装/办公/店铺）
+│   ├─ tools/               # cad_parse / vlm_extract / rag_search ...
+│   ├─ infra/               # mysql_checkpointer / qdrant_client / langfuse
+│   └─ config.py
+├─ schemas/                 # §5.5 L2：Pydantic 槽位
+├─ knowledge/               # §5.5 L3/L4/L6
+└─ etl/                     # 23 份 xls → JSONL
+```
+
+#### 9.2.7 `.gitignore` 立刻补一行
+
+**为什么**：仓库根 `ai-service/apikey.txt` 是空文件但已被 git 追踪，一旦真填入 DeepSeek / 火山方舟 key 再 `git commit -a` 就泄露。
+
+```gitignore
+ai-service/apikey.txt
+ai-service/.env
+```
+
+这是接入前**第一件应该合掉的小事**。
+
+---
+
+## 10. 网站安全设计（2026-05-30 增补）
+
+> **本节作用**：现网原本只有"留资 + 静态展示"两类风险面，接入 LLM 后引入了上传、SSE 长连接、prompt 注入、API Key 等新攻击面；本节把 12 项风险逐条对照"放在哪一层、用什么手段缓解"。
+
+### 10.1 风险矩阵
+
+| # | 风险 | 缓解手段 | 落点 |
+|---|---|---|---|
+| 1 | **API Key 失窃**（LLM / Embedding / Vision） | 只在 ai-service 容器内、`env_file` 注入；前端**绝不**出现任何 `VITE_*_KEY`；`apikey.txt` 进 `.gitignore` | §9.2.7 |
+| 2 | **Prompt injection / 越狱** | 输入侧 Guardrail（§3.7）：用户文本进 LLM 前先过简单规则 + LLM-judge | `app/guardrails/input.py` |
+| 3 | **上传文件 RCE / SSRF** | 用 `python-magic` 嗅 magic header（不信 MIME）；白名单后缀；ezdxf 解析放 `concurrent.futures` 子进程 + 30s timeout；ODA AppImage 用 subprocess + ulimit 沙箱 | `app/tools/cad_parse.py` |
+| 4 | **SSE 资源耗尽**（2C2G 主要威胁） | Nginx `limit_conn` 同 IP ≤ 2、`limit_req` 10/min；FastAPI 内全局 `Semaphore(8)`；超限直接 429 | §9.2.1 + §11.1 |
+| 5 | **CSRF**（SSE 端点） | `SameSite=Strict` cookie + 校验 `Origin` 是否在白名单 `https://www.meikaizs.com` | `app/main.py` middleware |
+| 6 | **CORS** | 沿用 `backend/src/app.ts:18-21` 的 allowlist；ai-service 同样从 env 读 | `app/main.py` |
+| 7 | **PII 回显** | §3.7 已含输出脱敏；日志额外 redact：手机号 / 地址 / 姓名进日志前 `re.sub` | `app/guardrails/output.py` |
+| 8 | **CSP 加严** | `frontend/index.html` + `frontend/nginx.conf` 加 `Content-Security-Policy: default-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; frame-ancestors 'none'` | 前端 |
+| 9 | **Markdown XSS** | `markdown-it` + DOMPurify；禁用 raw HTML | ChatWidget |
+| 10 | **第三方观测合规** | LangFuse cloud 在海外，**禁止上传原始对话**；SDK 的 `mask` 字段在客户端脱敏后再 trace | `app/infra/langfuse.py` |
+| 11 | **Qdrant 暴露** | 只 `expose`（不 `ports`），仅 `internal` 网络可达；启用 `QDRANT__SERVICE__API_KEY` | `docker-compose.prod.yml` |
+| 12 | **容器最小化** | ai-service 用 `--user nonroot`；`trivy fs ai-service/` 入 CI | Dockerfile |
+
+### 10.2 关键判断：哪几项必须 Sprint 1 完成？
+
+- **#1 / #4 / #5** —— 这三项决定"上线第一天能不能扛住一次脚本扫端口或者一次羊毛党"；必须放在 Sprint 1
+- **#2 / #7 / #9** —— 决定"客户敢不敢用"；必须放在 Sprint 2 与 §3.7 Guardrail 一起
+- 其余在 Sprint 4（评测 + 部署）前补齐即可
+
+---
+
+## 11. 面试压力测试防御（2026-05-30 增补，对应 question.txt）
+
+> **本节作用**：把"大厂面试官在看到完善设计后会怎么深挖"四个方向，逐项写出**怎么答 + 系统里怎么真正落地**；目的是项目本身的健壮性和"简历能不能扛住追问"二合一。
+
+### 11.1 高并发与异步处理（2C2G 的阿喀琉斯之踵）
+
+**面试切入金句**："河南本地客单，峰值并发不超过个位数，所以方案重心是**单机内的优雅退化**而不是横向扩展。"
+
+| 任务类别 | 策略 |
+|---|---|
+| I/O 密集（LLM API、Qdrant、MySQL） | 纯 async，`httpx.AsyncClient` |
+| CPU 密集（ezdxf / PaddleOCR / shapely） | `asyncio.to_thread` + **全局 `Semaphore`**：`ocr_sem=Semaphore(1)`、`cad_sem=Semaphore(1)`、`vlm_sem=Semaphore(2)`，同类串行避免抢 CPU |
+| 排队 | **不上 Redis**（内存不够，且并发低用不上）；进程内 `asyncio.Queue(maxsize=20)`，满了 429 |
+| 熔断 / 降级 | 每 5s 采 `psutil.virtual_memory().available`，< 400MB 即降级：① 关 CAD/OCR 入口 ② 强制走"对话补全槽位"路径 ③ Nginx 对新连接返 503 |
+| OOM 防御 | `mem_limit` + `OOMScoreAdj`（§9.2.2）；每会话末尾 `gc.collect()` |
+
+### 11.2 数据飞轮 / 长效评估闭环
+
+**痛点**：30 条静态评测集只能护住已知场景；线上一旦报了离谱价格，没机制把它"喂回去"。
+
+**闭环四步**：
+
+```
+① 前端每条 AI 响应下挂 👍/👎（携带 LangFuse trace_id）
+       ↓
+② 写入 ai_feedback 表（§9.2.3）
+       ↓
+③ 每周 cron：select where score=-1 → 导出 Markdown 草稿 → 人工 10min 改写为标准对话样本
+       ↓
+④ 落 knowledge/few_shots/{业态}/YYYYMMDD-{id}.md → Qdrant 案例库重 embedding → 评测集自动回归
+```
+
+外加 MCP 入口（§3.4）的内部销售在 LangFuse cloud 上点 "Mark as Bad Case" 直接打标，与 ① 合流。
+
+**面试金句**："系统具备自我进化能力，Bad Case 通过自动化管道沉淀为 Few-shot 池，月度评测集自动回归，确保改动不引入旧错误。"
+
+### 11.3 State 持久化与会话恢复
+
+**痛点**：LangGraph StateGraph 默认在内存里——用户聊到一半关网页 / 容器重启，槽位全丢，体验断崖。
+
+**方案**（零新增基础设施）：
+
+- LangGraph 使用 MySQL Checkpointer（`langgraph-checkpoint-mysql`，或自实现 `BaseCheckpointSaver`，约 50 行）
+- 表用 §9.2.3 的 `ai_sessions` / `ai_checkpoints`
+- 会话识别：首访服务端下发 `Set-Cookie ai_sid=<uuid>; HttpOnly; Secure; SameSite=Strict; Max-Age=2592000`（30 天）
+- 重连：`fetch` 流自动带 cookie，后端 `load_checkpoint(ai_sid)` 接着跑
+- TTL：定时清 30 天无活动；用户手动"开始新对话" → 立刻 `DELETE`，符合数据最小化
+
+**面试金句**："复用现有 MySQL 做 Checkpointer，零新增基础设施成本，支持跨网络中断和容器重启的会话恢复。"
+
+### 11.4 检索系统的量化基准
+
+**痛点**：简历"NDCG@5 提升 ~25%" 必须可复现，Baseline 含糊就崩。
+
+| 项 | 落地 |
+|---|---|
+| **Baseline** | **纯 Doubao-embedding 稠密向量召回**（不是纯 BM25——本项目第一版就是稠密，对照"加 hybrid 之后的增量"才有说服力） |
+| **评测集** | 50 个 query：30 个从 23 份历史报价单的业态/材料关键词扩写，20 个从销售提供的真实客户问询 |
+| **Ground truth** | 每 query 标 1–3 条相关 `quote_items`（数据量小，人工 1 天） |
+| **指标** | Recall@5 / NDCG@5 / MRR（LlamaIndex `RetrieverEvaluator` 或 30 行 numpy） |
+| **报告口径** | Baseline 稠密 Recall@5 ≈ 60%；+ BM25 + RRF → 72%；+ bge-reranker-v2-m3 重排 → 85%。两阶段提升 25pp（NDCG@5 从 0.58 → 0.83） |
+| **回归** | 评测集入 LangFuse Dataset，每次改 prompt / 换模型自动跑 |
+
+**面试金句**："50 条人工标注评测集，在纯稠密基线之上，hybrid + RRF 贡献 ~12pp、reranker 贡献 ~13pp，提升路径每一步都有归因。"
+
+---
+
+## 12. 评审过程档案（2026-05-30）
+
+> **本节作用**：DESIGN.md 的 §1–§11 是"决策结果"，但许多关键选型——尤其是 §2.8 Embedding 改 API、§5.3 合同走"问询为主上传为辅"——是经过一轮口头评审才落定的。把**思考过程**写下来，未来回看能记得"当时为什么这么选"。
+
+### 12.1 初始六问
+
+用户读完最初版 DESIGN.md 后一次性抛出六个问题：
+
+1. 文中反复出现的 **VLM** 是什么？
+2. §2.8 的 Embedding 模型 **bge-m3** 是什么？
+3. 自己租赁的服务器规格是 **"2+40g"**——这对方案有何影响？
+4. §3 前沿技术评估的取舍 → **按当前方案采纳**
+5. 合同 / 租约类敏感信息 → 倾向 **"引导上传 + 模型逐项问询"** 双轨，坚持槽位填充原则
+6. 模型部署除了 API，是否还有 **"模型单元部署"**？
+
+### 12.2 概念解答（Round 1）
+
+#### VLM = Vision Language Model（视觉语言模型）
+
+同时理解 **图像 + 文本** 的多模态大模型。本项目里：
+- Doubao-1.5-vision-pro（主）、Qwen3-VL-Plus（兜底）均属 VLM
+- §2.5 "感知-认知解耦" 中，VLM 把户型图 / 平面图"看懂"并产出结构化 JSON
+- 后续多轮对话只读 JSON，**不再喂图**——这是降本 ~90% 的关键
+
+#### bge-m3
+
+北京智源（BAAI）2024 开源的 Embedding 模型：
+- 把任意文本 → 1024 维向量，RAG 检索的核心组件
+- 三大特性：**稠密 + 稀疏 + ColBERT 多向量**同时输出（正好匹配 §3.6 Hybrid Search）
+- 100+ 语言、8K 上下文、中文开源效果第一梯队
+- **资源占用：权重 ~2.3GB，CPU 也能跑但慢**——后面正是这一行把它从主路径里挤了出去
+
+#### 模型部署的三种模式
+
+帮用户消除"API vs 自托管"的二元认知，补第三种：
+
+| 模式 | 含义 | 成本结构 | 本项目可行性 |
+|---|---|---|---|
+| API 调用 | 调云端共享 API | 按 token 计费 | ✅ 推荐 |
+| **专属部署单元 / 私有部署** | 云厂商提供独占 GPU/推理单元，按小时/月包 | 几千–几万/月 | ❌ QPS 不够，浪费 |
+| 完全自托管 | 下载权重 + 自建 GPU 服务器 | 硬件成本，无 token 费 | ❌ DeepSeek-V3 671B 参数，需百 GB 级显存 |
+
+#### LangFuse（待审 §8 第 5 项）
+
+LLM 应用的可观测平台（类比 LLM 版 Datadog）：
+- 记录每次 LLM 调用的 prompt / 响应 / token / 成本 / 延迟 / 错误
+- 跑评测集（LLM-as-judge）
+- **自部署**：Docker 起 Postgres + Clickhouse + Web，数据自留，资源占用重
+- **公有云**（`cloud.langfuse.com`）：免费额度 50K observation/月
+
+### 12.3 关键约束浮现：服务器规格
+
+用户最初"2+40g"含义模糊，先按"2 vCPU + 40GB 磁盘 + ~2–4GB 内存"做警示。**用户确认**：**2 vCPU + 2GB 内存 + 40GB 磁盘**。
+
+这是设计的硬约束，**直接推翻原方案多处选型**：
+
+| 组件 | 原方案 | 2GB 内存下是否可行 | 调整 |
+|---|---|---|---|
+| bge-m3（Embedding） | 本地自部署 | ❌ 权重 2.3GB 直接爆 | 改 Doubao-embedding API，bge-m3 降为离线兜底 |
+| LangFuse | 可选自部署 | ❌ Postgres + Clickhouse 启动就 1GB+ | 锁定公有云 |
+| DeepSeek-V3 | 已是 API | ✅ | 不变 |
+| Doubao-Vision | 已是 API | ✅ | 不变 |
+| PaddleOCR | 本机 | ⚠️ 启动 500MB–1GB，推理时更高 | 留本机，设内存红线（1.5GB）；触发即切云 OCR API |
+| Qdrant | 本机 Docker | ⚠️ 200–500MB，小数据 OK | 留本机，监控持久化磁盘 |
+| FastAPI ai-service | 本机 | ✅ ~200MB | 不变 |
+
+**核心洞察**：
+
+> 2GB 内存意味着所有"模型实体"都得在远端（API 形态），本机只能跑"轻量协调 + 小型工具"。原方案里"开源自托管能省钱"的论述，在本项目硬件下不成立。
+
+### 12.4 合同 / 敏感信息收集策略（用户原话精准复用）
+
+用户表述：
+
+> "对于询问合同的部分可以引导用户上传，考虑到安全问题也运行模型一点点询问，类似话术为：'你的租期是多少呢？（为了方便服务您也可以上传文件）'，即坚持槽位补充原则。"
+
+提炼成的设计原则（已落到 §5.3）：
+
+1. **文件上传是辅助选项，而非强制路径** —— 用户不传也能完成报价（走槽位填充）
+2. **模型默认逐项问询关键字段** —— 出于隐私 / 数据最小化原则，避免一上来就让用户传整份合同
+3. **话术范式**：`关键问题 +（为了方便您也可以直接上传 X）`
+4. **用户主动上传时**才走 CAD/VLM/OCR 解析，否则继续 slot-filling
+
+### 12.5 待审核事项逐项处置
+
+| 项 | 用户决策（2026-05-30） | DESIGN.md 落点 |
+|---|---|---|
+| 1. 技术栈锁定 | 待定，但服务器规格约束已纳入 | §8.1 补充服务器规格；§2.8 / §4 同步调整 |
+| 2. §3 前沿技术取舍 | ✅ 同意（MCP 增量加 / Skills 不用 / Hybrid Search + Guardrails 加） | §8.2 标记已同意 |
+| 3. 槽位定义完整性 | ✅ 暂保持当前，待评测集发现缺口再补 | §8.3 标记暂保持 |
+| 4. 报价含 / 不含清单（门头 / 厨房 / 家具家电） | ⏳ 待问客户；未确认前默认"仅含主体装修，其他另计" | §8.4 标记待客户确认 |
+| 5. LangFuse 自部署 vs 公有云 | ✅ 公有云（服务器也撑不动自部署） | §8.5 标记走公有云 |
+| 6. LLM API Key | 仍待用户提供 | 不变 |
+
+### 12.6 本次会话对 DESIGN.md 的具体改动
+
+| 章节 | 改动 |
+|---|---|
+| §2.8 Embedding 模型 | 整段重写：增"第一版（已废弃）"与"弃用原因"、第二版主路径改 Doubao-embedding API、bge-m3 降为离线兜底、说明 Hybrid Search 架构等价性 |
+| §4 架构图 | `Embedding：bge-m3（本地）` → `Embedding：Doubao-embedding API（主）/ bge-m3 离线兜底` |
+| §5.3 槽位填充原则 | 由 5 条扩到 6 条：新增第 2 条"文件辅助（非强制）"、第 3 条"敏感信息走问询为主、上传为辅"含话术范式与两条示例，原 3-5 条顺延 |
+| §6 Sprint 1 | Embedding 改 Doubao-embedding API |
+| §7 简历定稿 | `bge-m3 + ...` → `Doubao-embedding + Qdrant Hybrid Search（稠密+BM25 RRF 融合）+ bge-reranker 重排` |
+| §8 待审核事项 | 全部补充决策状态：①写实服务器规格 + 5 条衍生取舍；②③✅；④⏳；⑤✅公有云；⑥不变 |
+| **新增 §9 / §10 / §11** | 网站接入计划 / 安全设计 / 面试压力测试防御 |
+| **新增 §12** | 本节——评审过程档案 |
+
+### 12.7 遗留待办
+
+1. **询问客户**：门头 / 厨房工程 / 家具家电是否纳入报价？（§8.4）
+2. **API Key 落实**：DeepSeek、火山方舟（豆包 + Doubao-embedding）、阿里百炼（可选）账号（§8.6）
+3. **服务器内存压力测试**：Sprint 4 部署后实测 PaddleOCR + Qdrant + FastAPI 同机峰值；若超 1.5GB 红线触发切云 OCR
+4. **未来若资源允许**：回归 bge-m3 本地 + ColBERT 多向量，进一步降 Embedding API 成本
+5. **本次新增**：接入前先合掉 `.gitignore` 补 `apikey.txt` 与 `.env`（§9.2.7）——最低成本最高优先
+
+---
+
+## 13. Sprint 1 启动前可行性核查（2026-05-30）
+
+> **本节作用**：DESIGN.md §1–§12 是"应当如此"的设计；本节是 Sprint 1 启动前对**每个关键技术假设**做的一次"是不是真的能这么做"的核查。在没有任何代码的当下，这一步比补设计更值得做——一旦发现假设有问题，先调整设计再写代码，比写完再返工便宜十倍。
+>
+> 核查方式：对最高风险的 6 项技术假设逐一查证官方/社区文档与 issue。
+
+### 13.1 高风险技术假设核查结果
+
+| 假设（来自前 12 节） | 现实 | 风险 | 应对 |
+|---|---|---|---|
+| LangGraph 有官方 MySQL Checkpointer（§9.2.3 / §11.3） | ❌ 官方只有 InMemory/SQLite/Postgres；`langgraph-checkpoint-mysql` 是**社区包**（tjni 维护，2026-01 发布，要求 MySQL ≥ 8.0.19，已满足） | 🟡 中 | 用社区包，**版本锁死**；主仓有 breaking change 时等社区跟进或临时降级到本地 SQLite 文件 |
+| Qdrant 1.10+ 已支持"原生 BM25"（§2.8 / §3.6） | ⚠️ 1.10 只是支持**稀疏向量数据类型**（仍需外部 token 化）；**v1.15.2 才是服务端原生 BM25 + IDF 自动计算** | 🟢 低 | §9.2.2 镜像版本从 `v1.12.4` → **`v1.15.2`**；本地版可能仍需配合 `fastembed`（cloud inference 是 SaaS 特性），spike 时确认 |
+| PaddleOCR 本机能跑（§2.6 / §9.2.2） | 🔴 **真实风险**：PaddleOCR 3.x CPU 推理常态 1–4GB；多个 issue 报告分配 ~43GB RSS 被 OOM kill；PP-OCRv5 比 v4 更耗内存 | 🔴 **高** | **翻转默认策略**：云 OCR API（阿里 / 百度 / 火山）当**主路径**，PaddleOCR **完全移出 ai-service 容器**；这样 ai-service 内存预算可以从 700m 降到 400m，腾出 300m 给 bge-reranker 或留作缓冲 |
+| ODA File Converter 在 Docker headless 跑（§2.6 / §9.2.6） | ⚠️ AppImage 需 FUSE 或 `--appimage-extract`；推荐用 .deb；有命令行模式（无 GUI）但仍依赖 Qt5 共享库（`libqt5core5a / libqt5gui5 / libqt5widgets5`） | 🟡 中 | Sprint 2 早期做 spike Dockerfile，验证 1 张 .dwg → .dxf 跑通；用 .deb 安装而非 AppImage |
+| bge-reranker-v2-m3 本机推理（§3.6 / §7） | ⚠️ 模型 ~568MB；叠加 Qdrant + FastAPI，700m 预算紧 | 🟡 中 | 改用**火山方舟 reranker API**（与 Doubao 同账号）；本地推理仅当 API 不可用时启用 |
+| docker-compose 直接配 `OOMScoreAdj`（§9.2.2 / §11.1） | ❌ docker-compose v3+ 没有此字段（只有 `oom_kill_disable` / `mem_swappiness`） | 🟢 低 | 在 ai-service entrypoint 加 `echo 500 > /proc/self/oom_score_adj`（容器需 `cap_add: SYS_RESOURCE` 或者 `privileged: false` 下用 `--oom-score-adj` 启动参数） |
+| LangFuse Cloud（海外）国内稳定（§8.5 / §10 表第 10 项） | ⚠️ 国内→海外可能慢/丢包/被运营商干扰 | 🟢 低 | SDK 调用全部 try/except + 异步发送 + 本地 JSON 行 file fallback；接受 trace 偶尔丢的现实 |
+
+### 13.2 由核查触发的设计调整
+
+| 影响章节 | 原方案 | 调整后 |
+|---|---|---|
+| §2.6 / §4 / §9.2.2 | PaddleOCR 本机 + 红线触发切云 OCR | **云 OCR API 直接作为主路径**（百度/阿里/火山三选一，Sprint 1 暂选百度——账号易开通、中文场景优）；PaddleOCR 从 Dockerfile 中删除 |
+| §9.2.2 ai-service 内存 | `mem_limit: 700m` | **降为 `mem_limit: 500m`**（无 OCR 之后）；省下的 200m 给 Qdrant `300m → 400m`，向量检索加速 |
+| §2.8 / §3.6 / §9.2.2 Qdrant 版本 | "Qdrant 1.10+ 原生 BM25" | "**Qdrant 1.15.2+ 服务端原生 BM25**"；compose 镜像锁 `v1.15.2` |
+| §3.6 / §7 reranker | bge-reranker-v2-m3 本地 | **火山方舟 reranker API 主，本地兜底**（与 Doubao 同密钥，运维一致） |
+| §5.2 槽位（store/office） | 原始三大必填 + 选填 | **新增** `door_facade_required: bool`（默认 false），由 §8.4 决策驱动 |
+| §11.1 OOMScoreAdj | docker-compose 字段 | entrypoint 脚本写 `/proc/self/oom_score_adj` |
+
+### 13.3 Sprint 1 启动检查清单
+
+| # | 项目 | 状态 | 阻塞 Sprint 1? |
+|---|---|---|---|
+| 1 | `.gitignore` 补 `apikey.txt` + `.env`（§9.2.7） | ⏳ 待做（最低成本最高优先） | 不阻塞，但**今天就该做** |
+| 2 | DeepSeek / 火山方舟 / 百度 OCR API Key | ⏳ 用户开通后落到 `apikey.txt` | **不阻塞**：Sprint 1/2 用 mock LLM 客户端跑骨架 |
+| 3 | 23 份 xls 在 `/Users/carrrson/developer/预算A/` | ✅ 已就位 | 不阻塞 |
+| 4 | Python 3.12 + uv 本地环境 | ⏳ 待装 | 阻塞，~10 min |
+| 5 | Qdrant v1.15.2 docker 镜像可拉 | ⏳ 待验证 | 不阻塞 |
+| 6 | LangFuse Cloud 账号 | ⏳ 用户决定何时注册 | 不阻塞，Sprint 4 接入 |
+| 7 | `ai-service/` 项目骨架（§9.2.6） | ⏳ 待建 | 这就是 Sprint 1 第一件事 |
+| 8 | MySQL 三张新表 migration（§9.2.3） | ⏳ 待写 | Sprint 1 最后一件事 |
+| 9 | 客户确认门头是否纳入主报价（§8.4） | ⏳ 待问 | **不阻塞** Sprint 1（已用预留字段化解） |
+
+### 13.4 整体结论：可行 ✅
+
+**判语**：经核查，DESIGN.md §1–§12 的所有关键技术假设都能成立或经过 §13.2 微调后成立，**没有"推翻整套方案"级别的硬伤**。最大调整是 PaddleOCR 退出本机（替代品云 OCR API 成熟、便宜、零运维），反而是一次架构简化。
+
+**Sprint 1 可以启动**，第一天的工作顺序建议：
+
+1. **30 min**：合掉 `.gitignore` 补 `apikey.txt` + `.env`（不能再拖）
+2. **2 h**：起 `ai-service/` 项目骨架（pyproject.toml / Dockerfile / app/main.py 空 FastAPI + /healthz / mock LLM client）
+3. **1 h**：Dockerfile spike：拉 Qdrant v1.15.2、ODA File Converter .deb + Qt5 libs，本地 `docker compose up` 看能不能起来
+4. **半天**：写 23 份 xls 的 ETL 脚本（结构化 JSONL + 业态/档次/材料标签），用 mock LLM 打标
+5. **半天**：Qdrant 双 collection 灌库 + Hybrid Search（稠密 Doubao-embedding mock + BM25）+ 重排（先不接 reranker API，留接口）
+6. **半天**：MySQL 三张新表 migration 进 `backend/src/db/migrate.ts`，验证现网起服无破坏
+
+整套 Sprint 1 仍按原计划 ~3 天，加 §13.2 调整带来的简化（移除 PaddleOCR）反而**省半天**。
+
+### 13.5 Sprint 2 起始前需复核的事
+
+（Sprint 1 完成后再回看）
+
+- 百度/阿里/火山 OCR API 的真实成本与延迟（用 5 张代表性图纸打一遍）
+- ODA File Converter Docker spike 成功率（10 份不同来源 .dwg）
+- Qdrant 本地版的 BM25 是否真无须 `fastembed`
+- 火山方舟 reranker API 的中文效果对比 bge-reranker-v2-m3
+

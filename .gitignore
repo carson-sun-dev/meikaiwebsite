@@ -30,6 +30,12 @@ coverage/
 .env.*
 !.env.example
 
+# 本地预览/备份不入仓
+# style-preview 是设计 HTML 草稿,放在 public/ 会被 nginx 静态托管 → 防止生产暴露
+frontend/public/style-preview/
+# *.q75-backup/ 是图片压缩前的备份目录
+**/*.q75-backup/
+
 # IDE / Editor
 .vscode/
 .idea/

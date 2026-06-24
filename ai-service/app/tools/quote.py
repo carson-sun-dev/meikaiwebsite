@@ -244,32 +244,52 @@ def estimate_residential_quote(area_sqm: float, business_type: str | None = None
     return _estimate("residential", area_sqm, business_type)
 
 
-def format_quote_for_chat(q: QuoteResult) -> str:
-    """把 QuoteResult 格式化成对话回复文本(分档 + 分项 + 免责声明)。
+def format_quote_for_chat(q: QuoteResult, tier: Tier | None = None, top_n: int = 5) -> str:
+    """把 QuoteResult 格式化成对话回复文本。
+
+    WHY 加 tier 参数 + top_n 精简(2026-06-23 用户反馈):
+    - 原版一口气列三档 + 10+ 空间分项,用户没问就被信息淹没
+    - 加 tier 后:只展示用户选中档的区间 + top_n 分项,文本短 70%
+    - 兼容旧调用:tier=None 时退化为三档全展示(保持向后兼容,但 prompt 已不再用)
 
     WHY 单独抽函数而非让 LLM 自由组织格式:
-    - LLM 自由组织容易漏免责声明、漏单档、加多余浮夸话术
-    - 固定模板保证合规,同时把 LLM 的工作降级为"在模板外做导购话术"
+    - LLM 自由组织容易漏免责声明、加浮夸话术
+    - 固定模板保证合规,把 LLM 工作降级为"在模板外做导购话术"
     """
     bl_map = {"storefront": "门面房", "office": "办公空间", "residential": "住宅家装"}
     bt = f"/{q['business_type']}" if q["business_type"] else ""
+    tier_zh = {"basic": "基础档", "mid": "中端档", "premium": "高端档"}
+
     lines = [
         f"📋 美恺装饰 · 参考报价 / {bl_map[q['business_line']]}{bt} / {q['area_sqm']:g}㎡",
         "",
     ]
 
-    tier_zh = {"basic": "基础档", "mid": "中端档", "premium": "高端档"}
-    for tier in ("basic", "mid", "premium"):
+    if tier is None:
+        # 老调用:三档全展示 + mid 分项
+        for t_key in ("basic", "mid", "premium"):
+            t = q["tiers"][t_key]
+            lines.append(
+                f"🏷️ {tier_zh[t_key]}  ¥{t['per_sqm_low']:,}-¥{t['per_sqm_high']:,}/㎡  "
+                f"总价 ¥{t['total_low']:,}-¥{t['total_high']:,}"
+            )
+        breakdown = q["tiers"]["mid"]["breakdown"]
+        breakdown_label = "💡 中端档分项参考"
+    else:
+        # 新调用:只出选中档
         t = q["tiers"][tier]
         lines.append(
-            f"🏷️ {tier_zh[tier]}  ¥{t['per_sqm_low']:,}-¥{t['per_sqm_high']:,}/㎡  "
-            f"总价 ¥{t['total_low']:,}-¥{t['total_high']:,}"
+            f"🏷️ {tier_zh[tier]}  ¥{t['per_sqm_low']:,}-¥{t['per_sqm_high']:,}/㎡"
         )
+        lines.append(f"   总价 ¥{t['total_low']:,}-¥{t['total_high']:,}")
+        breakdown = t["breakdown"]
+        breakdown_label = f"💡 {tier_zh[tier]}主要分项(占比 Top {top_n})"
 
-    # 中端档分项(典型场景)做空间×工艺拆分展示;基础/高端只给档位 + 总价
+    # 分项裁剪:按 share_pct 降序取 top_n(默认 5),避免列 10+ 项把用户淹没
+    top_items = sorted(breakdown, key=lambda x: x.get("share_pct", 0), reverse=True)[:top_n]
     lines.append("")
-    lines.append("💡 中端档分项参考(空间 / 工艺):")
-    for item in q["tiers"]["mid"]["breakdown"]:
+    lines.append(f"{breakdown_label}(空间 / 占比):")
+    for item in top_items:
         lines.append(
             f"  · {item['space']:6s} {item['share_pct']:5.1f}%   "
             f"¥{item['amount_low']:,}-¥{item['amount_high']:,}"

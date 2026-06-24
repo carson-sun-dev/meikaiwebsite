@@ -1,152 +1,162 @@
 <template>
-  <section class="home-process" aria-label="从咨询到交付">
-    <div class="home-process__wrap">
-      <div class="home-process__head">
-        <h2 class="home-process__title">从咨询到交付，4步走完</h2>
-        <p class="home-process__subtitle">让你清楚知道每个节点正在做什么。</p>
-      </div>
+  <section class="mk-section process-section" aria-label="从咨询到交付的服务流程">
+    <div class="mk-container">
+      <header class="mk-section-header" ref="headerRef" :class="{ 'is-visible': revealedHeader }">
+        <span class="mk-eyebrow">Our Process</span>
+        <h2 class="mk-title">从咨询到交付，四步走完</h2>
+        <p class="mk-title-sub">让您清楚知道每个节点正在做什么</p>
+      </header>
 
-      <div class="home-process__grid">
-        <div v-for="s in steps" :key="s.no" class="home-step">
-          <div class="home-step__no">{{ s.no }}</div>
-          <div class="home-step__title">{{ s.title }}</div>
-          <div class="home-step__desc">{{ s.desc }}</div>
-          <div class="home-step__glow" aria-hidden="true" />
+      <div class="process-flow">
+        <div
+          v-for="(s, i) in steps"
+          :key="s.no"
+          class="process-step"
+          :class="{ 'is-visible': revealedSteps }"
+          :style="{ transitionDelay: `${i * 0.1}s` }"
+        >
+          <div class="process-step__num">{{ s.no }}</div>
+          <h4 class="process-step__title">{{ s.title }}</h4>
+          <p class="process-step__desc">{{ s.desc }}</p>
         </div>
       </div>
     </div>
   </section>
+
+  <!-- 尾部 logo 分隔器 -->
+  <div class="mk-divider" :style="{ '--mk-divider-logo': `url(${logoImg})` }">
+    <span class="mk-divider__seal"></span>
+  </div>
 </template>
 
 <script setup lang="ts">
+import { onMounted, onUnmounted, ref } from 'vue'
+import logoImg from '@/source/logo/logo.webp'
+
+// 节点繁体数字(壹贰叁肆) 按用户决策保留;其余文案全简体
 const steps = [
-  {
-    no: '01',
-    title: '需求沟通',
-    desc: '确认装修目标、风格偏好与预算范围，让方案从源头更准确。',
-  },
-  {
-    no: '02',
-    title: '方案设计',
-    desc: '提供可落地的设计与结构说明，并配合关键节点的对齐确认。',
-  },
-  {
-    no: '03',
-    title: '施工实施',
-    desc: '用工艺标准推进每一道工序，保证质量与进度可视化。',
-  },
-  {
-    no: '04',
-    title: '验收交付',
-    desc: '完成细节收口与整体复核，让结果一次到位更省心。',
-  },
+  { no: '壹', title: '需求沟通', desc: '确认装修目标、风格偏好与预算范围，让方案从源头更准确。' },
+  { no: '贰', title: '方案设计', desc: '提供可落地的设计与结构说明，并配合关键节点的对齐确认。' },
+  { no: '叁', title: '施工实施', desc: '用工艺标准推进每一道工序，保证质量与进度可视化。' },
+  { no: '肆', title: '验收交付', desc: '完成细节收口与整体复核，让结果一次到位更省心。' },
 ] as const
+
+const headerRef = ref<HTMLElement | null>(null)
+const revealedHeader = ref(false)
+const revealedSteps = ref(false)
+let obs: IntersectionObserver | undefined
+
+onMounted(() => {
+  if (typeof window === 'undefined') return
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    revealedHeader.value = true
+    revealedSteps.value = true
+    return
+  }
+  if (!headerRef.value) return
+  obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        revealedHeader.value = true
+        setTimeout(() => { revealedSteps.value = true }, 120)
+        obs?.disconnect()
+      }
+    })
+  }, { threshold: 0.15 })
+  obs.observe(headerRef.value)
+})
+
+onUnmounted(() => obs?.disconnect())
 </script>
 
 <style scoped>
-.home-process {
-  padding: 5rem 1.5rem;
-  background: #fff;
-}
+.process-section { background: var(--mk-paper-pure); }
 
-@media (min-width: 768px) {
-  .home-process {
-    padding-top: 6rem;
-    padding-bottom: 6rem;
-  }
+.mk-section-header {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+              transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
+.mk-section-header.is-visible { opacity: 1; transform: translateY(0); }
 
-.home-process__wrap {
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-  box-sizing: border-box;
-}
-
-@media (min-width: 768px) {
-  .home-process__wrap {
-    padding-left: 2rem;
-    padding-right: 2rem;
-  }
-}
-
-.home-process__head {
-  text-align: center;
-}
-
-.home-process__title {
-  margin: 0;
-  font-size: clamp(1.6rem, 2.8vw + 0.7rem, 2.4rem);
-  font-weight: 900;
-  letter-spacing: -0.03em;
-}
-
-.home-process__subtitle {
-  margin: 1rem auto 0;
-  max-width: 36rem;
-  color: rgba(0, 0, 0, 0.55);
-  font-size: 0.95rem;
-  line-height: 1.7;
-}
-
-.home-process__grid {
-  margin-top: 2rem;
+.process-flow {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.home-step {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
   position: relative;
-  border-radius: 16px;
-  background: #f1f1f1;
-  padding: 1.1rem 1rem 1.2rem;
-  box-sizing: border-box;
-  overflow: hidden;
 }
-
-.home-step__no {
-  font-weight: 900;
-  font-size: 1rem;
-  letter-spacing: -0.02em;
-  color: rgba(0, 0, 0, 0.7);
-}
-
-.home-step__title {
-  margin-top: 0.65rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-}
-
-.home-step__desc {
-  margin-top: 0.55rem;
-  color: rgba(0, 0, 0, 0.6);
-  line-height: 1.7;
-  font-size: 0.9rem;
-}
-
-.home-step__glow {
+.process-flow::before {
+  content: '';
   position: absolute;
-  left: -30%;
-  bottom: -40%;
-  width: 160%;
-  height: 120%;
-  background: radial-gradient(circle at 20% 30%, rgba(255, 84, 73, 0.18), transparent 60%);
-  pointer-events: none;
+  top: 38px; /* 圆章中心线 */
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: var(--mk-gold-soft);
+  z-index: 0;
+}
+@media (max-width: 768px) {
+  .process-flow { grid-template-columns: repeat(2, 1fr); gap: 40px 0; }
+  .process-flow::before { display: none; }
 }
 
-@media (max-width: 980px) and (min-width: 768px) {
-  .home-process__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.process-step {
+  text-align: center;
+  padding: 0 16px;
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+              transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.process-step.is-visible { opacity: 1; transform: translateY(0); }
+
+.process-step__num {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 22px;
+  background: white;
+  border: 2px solid var(--mk-brand);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mk-font-serif);
+  font-size: 30px;
+  color: var(--mk-brand);
+  transition: all 0.4s cubic-bezier(0.2, 0.85, 0.3, 1.05);
+}
+.process-step:hover .process-step__num {
+  background: var(--mk-brand);
+  color: white;
+  transform: scale(1.08);
+  box-shadow: var(--mk-shadow-brand);
 }
 
-@media (max-width: 767px) {
-  .home-process__grid {
-    grid-template-columns: 1fr;
-  }
+.process-step__title {
+  font-family: var(--mk-font-serif);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--mk-ink);
+  margin: 0 0 10px;
+  letter-spacing: 0.06em;
 }
+
+.process-step__desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--mk-ink-3);
+  line-height: 1.75;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .process-step { opacity: 1; transform: none; transition: none; }
+  .process-step:hover .process-step__num { transform: none; }
+}
+
+/* divider 背景跟 Process 节区同色(--mk-paper-pure),视觉上挂在 Process 底部,
+   不再被下一节 Gallery 的米灰(--mk-paper)同色"吸"过去显得像 Gallery 顶部 */
+.mk-divider { background: var(--mk-paper-pure); }
 </style>
-

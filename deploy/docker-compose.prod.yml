@@ -10,11 +10,20 @@ services:
     restart: unless-stopped
     command:
       - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
+      # WHY 用 MySQL 8.0 默认 utf8mb4_0900_ai_ci 而非 utf8mb4_unicode_ci:
+      # langgraph-checkpoint-mysql 的 CREATE TABLE DDL 不写 COLLATE,落到 _0900_ai_ci;
+      # 服务端若强制 _unicode_ci → WHERE 子句字符串字面量走服务端 collation,
+      # 与列 collation 不同导致 "Illegal mix of collations" (1267) 报错。
+      - --collation-server=utf8mb4_0900_ai_ci
       - --innodb-buffer-pool-size=256M
       - --max-connections=80
       - --performance-schema=OFF
       - --table-open-cache=200
+      # WHY 把 wait_timeout 拉到 30 天:AIOMySQLSaver 连接池没有自动 ping/reconnect,
+      # 默认 wait_timeout=8h 时,长时间无请求后第一个请求必报 OperationalError(2013)。
+      # 这是临时缓解;根治需在 saver 包装层加 retry-on-stale,见 DESIGN §15.2 / Sprint 5 已知问题
+      - --wait-timeout=2592000
+      - --interactive-timeout=2592000
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-meikai}
@@ -110,7 +119,10 @@ services:
     mem_limit: 80m
 
   # ---- AI 服务(DESIGN §9.2.2,Sprint 1 骨架) ----
+  # 占位上线期(2026-06-24)用 profiles: [ai] 默认不启,省 ~500M 内存。
+  # 恢复:`docker compose -f deploy/docker-compose.prod.yml --env-file .env --profile ai up -d`
   ai-service:
+    profiles: [ai]
     build:
       context: ../ai-service
       dockerfile: Dockerfile
@@ -121,6 +133,9 @@ services:
     environment:
       # 显式兜底:即便 .env 漏写 LLM_MODE 也不会误切到 live(可能 key 还没填)
       LLM_MODE: ${LLM_MODE:-mock}
+    volumes:
+      # 数据集走 volume:更新数据无需 rebuild 镜像;.dockerignore 已屏蔽 data/
+      - ../ai-service/data:/app/data:ro
     depends_on:
       mysql:
         condition: service_healthy
@@ -144,6 +159,8 @@ services:
       - SYS_RESOURCE
 
   qdrant:
+    # 占位上线期同步关停,跟 ai-service 一组 profile,避免无端 400M 占用
+    profiles: [ai]
     # DESIGN §13.1/§13.2:服务端原生 BM25 + IDF 需 v1.15.2+
     image: qdrant/qdrant:v1.15.2
     restart: unless-stopped

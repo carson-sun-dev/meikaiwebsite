@@ -1,9 +1,12 @@
 <template>
   <div class="home-footer-shell">
+    <!-- 单一深色 footer:全宽无圆角,内部依次:保持联系 → 4 列网格 → 备案 -->
     <footer class="home-footer">
       <div class="home-footer__inner">
+        <!-- 顶部:保持联系(原独立 section,移入 footer) -->
         <div class="home-footer__contact-block">
-          <h2 class="home-footer__contact-title">保持联系</h2>
+          <div class="home-footer__contact-eyebrow">Keep in Touch</div>
+          <h2 class="home-footer__contact-title">请和我们保持联系</h2>
           <form class="home-footer__email-row" @submit.prevent="onSubmitPhone">
             <input
               v-model="phone"
@@ -26,35 +29,50 @@
             </button>
           </form>
           <p v-if="footerError" class="home-footer__error" role="alert">{{ footerError }}</p>
-          <p class="home-footer__contact-hint">我们的总工程师将尽快联系您，为您排忧。</p>
-          <div class="home-footer__wechat-wrap">
-            <img :src="wechatQrImg" alt="微信扫码联系" class="home-footer__wechat-qr" width="88" height="88" loading="lazy" />
-          </div>
+          <p class="home-footer__contact-hint">我们的总工程师将尽快为您排忧。</p>
+          <!-- 二维码移到"联系"列地址下方(用户反馈) -->
         </div>
 
-        <div class="home-footer__bottom">
-          <router-link to="/home" class="home-footer__logo-link" aria-label="美恺装饰">
-            <img :src="logoImg" alt="" class="home-footer__logo-mark" />
-            <img :src="ziImg" alt="美恺装饰" class="home-footer__logo-word" />
-          </router-link>
-          <nav class="home-footer__nav" aria-label="页脚快速链接">
-            <router-link class="home-footer__link" to="/">网站首页</router-link>
-            <router-link class="home-footer__link" to="/store">
-              品牌店装
+        <!-- v2 风格 4 列网格(brand / 业务 / 关于 / 联系) -->
+        <div class="home-footer__cols">
+          <div class="home-footer__brand-col">
+            <router-link to="/home" class="home-footer__logo-link" aria-label="美恺装饰">
+              <img :src="totalLogoImg" alt="美恺装饰" class="home-footer__brand-logo" />
             </router-link>
-            <router-link class="home-footer__link" to="/business">商务·办公</router-link>
+            <!-- 用户反馈:去掉 logo 下面文字 -->
+          </div>
+
+          <div class="home-footer__col">
+            <h4 class="home-footer__col-title">业 务</h4>
+            <router-link class="home-footer__link" to="/store">品牌店装</router-link>
+            <router-link class="home-footer__link" to="/business">商务办公</router-link>
             <router-link class="home-footer__link" to="/residential">精品家装</router-link>
-          </nav>
-          <address class="home-footer__address">
-            <div class="home-footer__addr-line">
-              <el-icon><Phone /></el-icon>
-              <span>13393736352</span>
+          </div>
+
+          <div class="home-footer__col">
+            <h4 class="home-footer__col-title">关 于</h4>
+            <router-link class="home-footer__link" to="/about">公司简介</router-link>
+            <a class="home-footer__link" href="javascript:void(0)" role="button" @click="openChat">报价咨询</a>
+            <router-link class="home-footer__link" to="/home">网站首页</router-link>
+          </div>
+
+          <div id="site-contact" class="home-footer__col home-footer__col--contact">
+            <h4 class="home-footer__col-title">联 系</h4>
+            <address class="home-footer__address">
+              <div class="home-footer__addr-line home-footer__addr-line--phone">
+                <PhoneIcon class="home-footer__addr-icon" />
+                <a class="home-footer__tel" href="tel:13393736352">13393736352</a>
+              </div>
+              <div class="home-footer__addr-line">
+                <LocationIcon class="home-footer__addr-icon" />
+                <span>河南省郑州市管城回族区南台路9号</span>
+              </div>
+            </address>
+            <!-- 二维码:贴在联系信息下方 -->
+            <div class="home-footer__wechat-wrap">
+              <img :src="wechatQrImg" alt="微信扫码联系" class="home-footer__wechat-qr" width="96" height="96" loading="lazy" />
             </div>
-            <div class="home-footer__addr-line">
-              <el-icon><Location /></el-icon>
-              <span>河南省郑州市管城回族区南台路9号</span>
-            </div>
-          </address>
+          </div>
         </div>
 
         <div class="home-footer__legal" role="contentinfo" aria-label="网站备案与版权信息">
@@ -110,13 +128,16 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Location, Phone } from '@element-plus/icons-vue'
 
+import LocationIcon from '@/components/icons/LocationIcon.vue'
+import PhoneIcon from '@/components/icons/PhoneIcon.vue'
 import { submitFooterPhone } from '@/api/leads'
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon.vue'
-import logoImg from '@/source/logo/logo.webp'
-import ziImg from '@/source/logo/zi.webp'
+import totalLogoImg from '@/source/logo/total_logo.webp'
 import wechatQrImg from '@/source/wechat.webp'
+import { useChatWidget } from '@/composables/useChatWidget'
+
+const { open: openChat } = useChatWidget()
 import { validatePhone } from '@/utils/phoneValidation'
 import { getCurrentYear } from '@/utils/companyTimeline'
 
@@ -156,24 +177,20 @@ async function onSubmitPhone() {
 </script>
 
 <style scoped>
-/* 与 Gallery / CTA 同宽对齐的左右留白 */
 .home-footer-shell {
-  padding-inline: max(1rem, calc((100vw - 67.5rem) / 2));
   box-sizing: border-box;
 }
 
-@media (min-width: 768px) {
-  .home-footer-shell {
-    padding-inline: max(1.5rem, calc((100vw - 67.5rem) / 2));
-  }
-}
-
+/* === 单一深色 footer:全宽 + 无圆角(用户反馈) === */
 .home-footer {
-  background: #000;
-  padding: 3.25rem 1.5rem;
+  background: #0e0e0e;
+  padding: 4.5rem 1.5rem 2rem;
   color: #fff;
-  border-top-left-radius: 1.25rem;
-  border-top-right-radius: 1.25rem;
+  width: 100%;
+  /* 无 max-width / margin-inline / border-radius — 全宽方角 */
+}
+@media (min-width: 768px) {
+  .home-footer { padding: 5rem 2rem 2.5rem; }
 }
 
 @media (min-width: 768px) {
@@ -200,47 +217,60 @@ async function onSubmitPhone() {
 
 .home-footer__contact-block {
   position: relative;
+  color: rgba(255, 255, 255, 0.92);
+  padding-bottom: 3rem;
+  margin-bottom: 3rem;
+  /* 用户反馈:此处去掉 border-bottom 横线,只保留 footer 底部 legal 之上那一条 */
 }
+
+.home-footer__contact-eyebrow {
+  text-align: center;
+  font-family: 'EB Garamond', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--mk-gold, #b8860b);
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.home-footer__contact-eyebrow::before { content: '— '; }
+.home-footer__contact-eyebrow::after { content: ' —'; }
 
 .home-footer__contact-title {
   margin: 0;
   text-align: center;
-  font-size: clamp(2rem, 5vw + 0.75rem, 3.25rem);
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(2rem, 5vw + 0.75rem, 3rem);
   font-weight: 600;
   line-height: 1.15;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.05em;
+  color: #fff;
 }
 
-/* 与输入框（max-width 28rem）右缘对齐留白，absolute 不参与居中计算 */
+/* 二维码:放在"联系"列地址下方,跟字段一起堆叠 */
 .home-footer__wechat-wrap {
-  position: absolute;
-  left: calc(50% + 14rem + 0.75rem);
-  /* 与 max-width 28rem 的输入条垂直居中对齐（标题 + 1.75rem margin 后取行高一半） */
-  top: 7.05rem;
-  width: 5.25rem;
-  height: 5.25rem;
-  transform: translateY(-50%);
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }
-
 .home-footer__wechat-qr {
   display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 0.35rem;
+  width: 96px;
+  height: 96px;
+  border-radius: 4px;
   object-fit: contain;
   background: #fff;
+  padding: 4px;
+  box-sizing: border-box;
+  margin-left: 10%;
 }
-
-@media (max-width: 767px) {
-  .home-footer__wechat-wrap {
-    position: static;
-    left: auto;
-    top: auto;
-    width: 5.25rem;
-    height: 5.25rem;
-    margin: 1.25rem auto 0;
-    transform: none;
-  }
+.home-footer__wechat-cap {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.2em;
 }
 
 .home-footer__contact-hint {
@@ -260,7 +290,7 @@ async function onSubmitPhone() {
   gap: 0.5rem;
   border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
   padding: 0.5rem 1rem;
 }
 
@@ -284,7 +314,9 @@ async function onSubmitPhone() {
 }
 
 .home-footer__email-input::placeholder {
+  font-size: 18px;
   color: rgba(255, 255, 255, 0.4);
+  text-align: center;
 }
 
 .home-footer__email-submit {
@@ -294,13 +326,18 @@ async function onSubmitPhone() {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  padding-left: 3px;
   border: none;
   border-radius: 9999px;
-  background: #fff;
-  color: #000;
+  background: #c41e3a;
+  color: #fff;
   cursor: pointer;
   line-height: 0;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+.home-footer__email-submit:hover {
+  background: #8b1424;
+  transform: scale(1.05);
 }
 
 .home-footer__email-submit:disabled {
@@ -314,102 +351,155 @@ async function onSubmitPhone() {
   height: 0.95rem;
 }
 
-.home-footer__bottom {
+/* v2 风格 4 列网格 — 桌面 4 列;移动端聪明嵌套(用户反馈:不能粗暴堆叠) */
+.home-footer__cols {
   margin-top: 3rem;
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1.4fr;
+  gap: 3rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 3rem;
+}
+/* ≤900:brand 跨满居中 / 业务+关于 2 列并排居中 / 联系(含二维码) 跨满居中 */
+@media (max-width: 900px) {
+  .home-footer__cols { grid-template-columns: 1fr 1fr; gap: 2.8rem 2rem; }
+
+  /* brand col:跨满 + logo 与内部水平居中 */
+  .home-footer__brand-col {
+    grid-column: 1 / -1;
+    align-items: center;
+    text-align: center;
+  }
+  .home-footer__brand-col .home-footer__logo-link {
+    align-self: center;
+    justify-content: center;
+  }
+  /* 重置 PC 端 margin-left: 60% / margin-top: 15% 偏移,否则 mobile 仍偏右 */
+  .home-footer__brand-col .home-footer__brand-logo {
+    margin: 0;
+  }
+
+  /* 业务 + 关于 col:标题与链接水平居中(用户反馈) */
+  .home-footer__col:nth-of-type(2),
+  .home-footer__col:nth-of-type(3) {
+    align-items: center;
+    text-align: center;
+  }
+  .home-footer__col:nth-of-type(2) .home-footer__link,
+  .home-footer__col:nth-of-type(3) .home-footer__link {
+    /* 取消默认 hover 的 padding-left 偏移(居中布局下会让链接跳到偏右) */
+    padding-left: 0 !important;
+    text-align: center;
+    width: auto;
+  }
+
+  /* 联系 col:跨满 + 地址/二维码水平居中 */
+  .home-footer__col:nth-of-type(4) {
+    grid-column: 1 / -1;
+    align-items: center;
+    text-align: center;
+  }
+  .home-footer__col:nth-of-type(4) .home-footer__wechat-wrap {
+    align-items: center;
+  }
+  .home-footer__col:nth-of-type(4) .home-footer__address,
+  .home-footer__col:nth-of-type(4) .home-footer__addr-line {
+    justify-content: center;
+  }
+}
+/* ≤480 业务/关于 仍 2 列(短链接撑得下),不再继续拆 */
+
+.home-footer__brand-col {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 2rem;
-}
-
-@media (min-width: 768px) {
-  .home-footer__bottom {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
+  gap: 1.25rem;
 }
 
 .home-footer__logo-link {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  align-self: center;
-  box-sizing: border-box;
+  display: inline-flex;
+  align-self: flex-start;
   text-decoration: none;
+  pointer-events: auto;
 }
 
-@media (min-width: 768px) {
-  .home-footer__logo-link {
-    transform: translateY(-0.25rem);
-  }
-}
-
-.home-footer__logo-mark {
-  width: 56px;
-  height: 52px;
-  flex-shrink: 0;
+.home-footer__brand-logo {
+  width: auto;
+  height: 140px;          /* 没了文字,适当增大让 logo 撑住第一列 */
   object-fit: contain;
   pointer-events: none;
+  margin-top: 15%;
+  margin-left: 60%;
 }
 
-.home-footer__logo-word {
-  width: 105px;
-  height: 52px;
-  flex-shrink: 0;
-  object-fit: contain;
-  pointer-events: none;
-}
-
-.home-footer__nav {
+.home-footer__col {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem 1.25rem;
-  font-family:
-    Manrope,
-    'Noto Sans JP',
-    'Noto Sans SC',
-    system-ui,
-    sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.2;
-  letter-spacing: -0.14px;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.home-footer__col-title {
+  margin: 0 0 1rem;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  letter-spacing: 0.18em;
 }
 
 .home-footer__link {
-  color: #fff;
+  display: block;
+  padding: 6px 0;
+  font-size: 13.5px;
+  font-family: 'Noto Sans SC', system-ui, sans-serif;
+  color: rgba(255, 255, 255, 0.6);
   text-decoration: none;
   white-space: nowrap;
+  letter-spacing: 0.04em;
+  transition: color 0.3s ease, padding-left 0.3s ease;
 }
-
 .home-footer__link:hover {
-  opacity: 0.92;
+  color: #c41e3a;
+  padding-left: 6px;
 }
 
 .home-footer__address {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 13.5px;
   font-style: normal;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .home-footer__addr-line {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
+  line-height: 1.6;
 }
 
 .home-footer__addr-line + .home-footer__addr-line {
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
 }
 
-.home-footer__addr-line :deep(.el-icon) {
-  margin-top: 0.125rem;
+.home-footer__col--contact {
+  scroll-margin-top: 88px;
+}
+
+.home-footer__tel {
+  color: inherit;
+  text-decoration: none;
+}
+
+.home-footer__tel:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.home-footer__addr-icon {
+  margin-top: 0.18rem;
   flex-shrink: 0;
+  width: 1.05em;
+  height: 1.05em;
+  color: #c41e3a;
 }
 
 .home-footer__legal {

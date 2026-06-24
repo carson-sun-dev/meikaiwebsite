@@ -1,138 +1,151 @@
 <template>
-  <section class="home-why">
-    <div class="home-why__inner">
-      <header class="home-why__head">
-        <h2 class="home-why__title">为什么选择美恺装饰？</h2>
-        <p class="home-why__promise">我们承诺！</p>
+  <section class="mk-section why-section">
+    <div class="mk-container">
+      <header class="mk-section-header" ref="headerRef" :class="{ 'is-visible': revealedHeader }">
+        <span class="mk-eyebrow">Why Choose Us</span>
+        <h2 class="mk-title">为什么选择美恺</h2>
+        <p class="mk-title-sub">我们承诺,每一项都做到</p>
       </header>
-      <div class="why-hover-list" role="list" @mouseleave="accordionActive = null">
-        <div
-          v-for="row in homeWhyItems"
+
+      <div class="why-grid">
+        <article
+          v-for="(row, i) in homeWhyItems"
           :key="row.name"
-          class="why-hover-item"
-          role="listitem"
-          @mouseenter="accordionActive = row.name"
+          class="why-card"
+          :class="{ 'is-visible': revealedCards }"
+          :style="{ transitionDelay: `${i * 0.08}s` }"
         >
-          <div
-            class="why-hover-item__header"
-            :aria-expanded="accordionActive === row.name"
-          >
-            <span class="why-item__head">
-              <span class="why-item__heading">{{ row.title }}</span>
-              <span class="why-item__num" aria-hidden="true">{{ row.num }}</span>
-            </span>
-            <el-icon
-              class="why-hover-item__arrow"
-              :class="{ 'is-open': accordionActive === row.name }"
-              aria-hidden="true"
-            >
-              <ArrowRight />
-            </el-icon>
-          </div>
-          <div
-            class="why-hover-item__panel-anim"
-            :class="{ 'is-open': accordionActive === row.name }"
-          >
-            <div class="why-hover-item__panel-inner">
-              <div class="why-hover-item__panel">
-                <p class="home-why__body">{{ row.body }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+          <span class="why-card__num">{{ row.num }}</span>
+          <h3 class="why-card__title">{{ row.title }}</h3>
+          <p class="why-card__body">{{ row.body }}</p>
+        </article>
       </div>
     </div>
   </section>
+  <!-- 按用户决策:Why 节区**不带**尾部 divider -->
 </template>
 
 <script setup lang="ts">
-import { ArrowRight } from '@element-plus/icons-vue'
-import { ref } from 'vue'
-
+import { onMounted, onUnmounted, ref } from 'vue'
 import { homeWhyItems } from '@/data/homeWhyItems'
 
-/** 当前悬停展开的面板，移出列表区域后全部收起 */
-const accordionActive = ref<string | null>(null)
+const headerRef = ref<HTMLElement | null>(null)
+const revealedHeader = ref(false)
+const revealedCards = ref(false)
+
+let obs: IntersectionObserver | undefined
+
+onMounted(() => {
+  if (typeof window === 'undefined') return
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    revealedHeader.value = true
+    revealedCards.value = true
+    return
+  }
+  if (!headerRef.value) return
+  obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        revealedHeader.value = true
+        // 卡片稍后触发,跟 header 错开
+        setTimeout(() => { revealedCards.value = true }, 120)
+        obs?.disconnect()
+      }
+    })
+  }, { threshold: 0.15 })
+  obs.observe(headerRef.value)
+})
+
+onUnmounted(() => obs?.disconnect())
 </script>
 
 <style scoped>
-.why-hover-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
+.why-section { background: var(--mk-paper-pure); }
 
-.why-hover-item {
-  overflow: hidden;
-  border-radius: 0.75rem;
-  background: rgb(245 245 245);
+.mk-section-header {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+              transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
+.mk-section-header.is-visible { opacity: 1; transform: translateY(0); }
 
-.why-hover-item__header {
-  display: flex;
-  align-items: center;
-  min-height: 3.5rem;
-  padding: 1rem 1.25rem;
-  font-size: 1rem;
-  font-weight: 400;
-  color: rgb(23 23 23);
-  cursor: default;
-  user-select: none;
-}
-
-.why-item__head {
-  display: flex;
-  flex: 1;
-  min-width: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.why-item__heading {
-  flex: 1;
-  min-width: 0;
-  font-weight: 700;
-  text-align: left;
-}
-
-.why-item__num {
-  flex-shrink: 0;
-  margin-right: 1rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: #171717;
-}
-
-.why-hover-item__arrow {
-  flex-shrink: 0;
-  font-size: 1rem;
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  color: rgb(23 23 23);
-}
-
-.why-hover-item__arrow.is-open {
-  transform: rotate(90deg);
-}
-
-/* 高度过渡：0fr → 1fr，避免 v-show 瞬间切换 */
-.why-hover-item__panel-anim {
+.why-grid {
   display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+}
+@media (max-width: 1200px) { .why-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 768px)  { .why-grid { grid-template-columns: 1fr; } }
+
+.why-card {
+  position: relative;
+  background: var(--mk-card);
+  padding: 40px 26px;
+  border: 1px solid var(--mk-line);
+  border-radius: 6px;
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+              transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1),
+              border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.why-card.is-visible { opacity: 1; transform: translateY(0); }
+
+.why-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--mk-brand);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.2, 0.85, 0.3, 1);
+}
+.why-card:hover {
+  border-color: rgba(196, 30, 58, 0.5);
+  box-shadow: var(--mk-shadow-md);
+  transform: translateY(-6px) !important;
+}
+.why-card:hover::before { transform: scaleX(1); }
+
+.why-card__num {
+  display: block;
+  font-family: var(--mk-font-en);
+  font-style: italic;
+  font-size: 46px;
+  color: var(--mk-gold);
+  line-height: 1;
+  margin-bottom: 22px;
+  opacity: 0.85;
 }
 
-.why-hover-item__panel-anim.is-open {
-  grid-template-rows: 1fr;
+.why-card__title {
+  font-family: var(--mk-font-serif);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--mk-ink);
+  margin: 0 0 14px;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
 }
 
-.why-hover-item__panel-inner {
-  overflow: hidden;
-  min-height: 0;
+.why-card__body {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--mk-ink-3);
+  line-height: 1.8;
 }
 
-.why-hover-item__panel {
-  padding: 0 1.25rem 1.25rem;
-  padding-top: 0;
+@media (prefers-reduced-motion: reduce) {
+  .why-card { opacity: 1; transform: none !important; transition: none; }
+  .why-card:hover { transform: none !important; }
+}
+
+/* 触摸屏:卡片顶部红条 + 边框朱红 直接激活,不再依赖 hover */
+@media (hover: none) and (pointer: coarse) {
+  .why-card { border-color: rgba(196, 30, 58, 0.28); }
+  .why-card::before { transform: scaleX(1); }
+  .why-card:hover { transform: none !important; }
 }
 </style>

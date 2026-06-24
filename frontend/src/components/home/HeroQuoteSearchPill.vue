@@ -2,7 +2,7 @@
 <template>
   <div class="quote-pill">
     <button type="button" class="quote-pill__arrow-frame" aria-label="查看报价" @click="emit('search')">
-      <el-icon :size="14" class="quote-pill__arrow-icon"><TopRight /></el-icon>
+      <TopRightIcon class="quote-pill__arrow-icon" />
     </button>
     <span class="quote-pill__divider" aria-hidden="true" />
     <div class="quote-pill__text-slot">
@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { TopRight } from '@element-plus/icons-vue'
+import TopRightIcon from '@/components/icons/TopRightIcon.vue'
 
 const props = defineProps<{
   messages: readonly string[]
@@ -127,6 +127,8 @@ const currentText = computed(() => {
 .quote-pill__arrow-icon {
   position: relative;
   z-index: 1;
+  width: 14px;
+  height: 14px;
   color: #fff;
 }
 
@@ -169,6 +171,7 @@ const currentText = computed(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.3);
 }
 
 .quote-text-enter-active,

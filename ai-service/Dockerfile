@@ -19,13 +19,18 @@ RUN useradd -m -u 10001 -s /bin/bash appuser
 WORKDIR /app
 
 # 依赖先装,代码后拷,利用 docker 层缓存
-COPY pyproject.toml ./
+# README.md 必须随 pyproject.toml 一起拷:pyproject 声明 readme = "README.md",
+# hatchling build wheel 时校验文件存在,缺则 metadata-generation-failed
+COPY pyproject.toml README.md ./
 RUN pip install --upgrade pip && pip install .
 
 # 业务代码
 COPY app ./app
 COPY schemas ./schemas
 COPY knowledge ./knowledge
+# etl 模块:build_index 一次性 job 经 `docker compose run` 触发,必须在镜像内
+COPY etl ./etl
+# data/ 故意不 COPY:走 volume 挂载,数据更新无需 rebuild;.dockerignore 已屏蔽
 
 # OOM 优先级:让自己比 mysql 先被杀(DESIGN §13.2)
 # 容器需配合 cap_add: SYS_RESOURCE

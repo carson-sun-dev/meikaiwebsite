@@ -19,6 +19,16 @@ from app.infra.llm_client import get_llm_client
 
 log = logging.getLogger("graphs.router")
 
+# Sprint A 启发式兜底:用户消息明显含业务线词时直接判,跳过 L0
+# 比 L0 更快 + 更稳(L0 对短消息"你好/120 平"会误判)
+LINE_KEYWORDS = {
+    "storefront": ("店铺", "门店", "门面", "餐饮", "火锅", "茶馆", "咖啡", "奶茶", "零售",
+                   "美容", "服装", "饭店", "餐厅", "饮品", "外卖", "堂食", "店"),
+    "office": ("办公", "写字楼", "公司", "团队", "工位", "会议室", "前台", "弱电"),
+    "residential": ("家装", "住宅", "新房", "二手房", "翻新", "户型", "家里", "自己家",
+                    "我家", "卧室", "客厅", "婚房", "学区房"),
+}
+
 ROUTER_PROMPT = """你是装修业态分类助手。根据用户首条消息判断他想装修的空间类型,只输出 1 个英文标签:
 
 - residential:住宅家装(自住房、新房、二手房翻新、别墅、公寓内装)
@@ -36,31 +46,36 @@ async def classify_node(state: ChatState) -> dict:
     user_msg = state.get("user_msg", "").strip()
     if not user_msg:
         log.warning("router got empty user_msg → unknown")
-        return {"business_line": "unknown"}
+        return {"business_line": "unknown", "business_line_confident": False}
 
-    # Sprint 2 step 6:checkpointer 跨轮持久化 state 后,第二轮起 business_line 已存在
-    # WHY 短路:第二轮用户说"200 平米",短消息 + 无业态词会让 router L0 误判;复用上一轮
-    #     分类既省 L0 token,又防止"我们之前说好是火锅店,第二轮又被改判成住宅"的体验
-    # WHY 仍保留 unknown 不短路:unknown 是兜底失败信号,该让 L0 再试一次抓机会
     existing = state.get("business_line")
     if existing and existing != "unknown":
         log.info("router short-circuit:复用上一轮 business_line=%s", existing)
+        # 保留上轮 confident 状态(不在此覆盖,让 state 自然继承)
         return {"business_line": existing}
 
+    # Sprint A 启发式:用户消息明显含业务线词 → 直接判,不调 LLM 更稳更快
+    for biz, keywords in LINE_KEYWORDS.items():
+        if any(kw in user_msg for kw in keywords):
+            log.info("router heuristic %r → %s (kw match)", user_msg[:30], biz)
+            return {"business_line": biz, "business_line_confident": True}
+
+    # 启发式没命中 → L0 LLM 兜底
     llm = get_llm_client()
     full = ""
     async for chunk in llm.stream(ROUTER_PROMPT.format(msg=user_msg), level="l0"):
         full += chunk
 
-    # WHY 全转小写 + 子串匹配:容忍 LLM 输出 "Storefront"、"storefront / 门面房"、"答案:storefront" 这类杂质
     raw = full.strip().lower()
     for biz in ("residential", "office", "storefront"):
         if biz in raw:
             log.info("router classified %r → %s (raw=%r)", user_msg[:30], biz, full[:60])
-            return {"business_line": biz}
+            return {"business_line": biz, "business_line_confident": True}
 
-    log.warning("router fallback storefront,raw=%r", full[:80])
-    return {"business_line": "storefront"}
+    # Sprint A:LLM 也判不出 → 标 unknown + confident=False,让 chat 先问业务线
+    # 之前 fallback storefront → 用户说"你好"被直接当成"想问店铺",导致 AI 假设业务线
+    log.warning("router unable to classify,标 unknown 让 chat 先问业务线,raw=%r", full[:80])
+    return {"business_line": "unknown", "business_line_confident": False}
 
 
 def route_to_subgraph(state: ChatState) -> str:

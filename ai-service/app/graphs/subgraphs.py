@@ -106,37 +106,38 @@ def _build_quote_prompt(
     quote: QuoteResult,
     user_msg: str,
     business_line: BusinessLine,
+    tier: str | None = None,
     examples: list[QuoteExample] | None = None,
 ) -> str:
     """报价分支 prompt — quote_block 必须被 L2 原样输出,前后允许导购包装。
 
-    examples 来自 Sprint 2 step 5 RAG 检索,作为"参考案例"注入(纯素材、不含数字),
-    L2 可在导购话术里引用类目/工艺让回复"有据可依",但 Guardrail 仍以 quote_block 为
-    唯一合法数字源(详见 rag.py:format_examples_for_prompt 注释)。
+    WHY 强约束"不编用户未提细节"(2026-06-23 用户反馈):
+        之前 L2 会自由发挥说"您关注的吊顶/门头工艺我们都有丰富经验" — 但用户根本没提
+        吊顶/门头。改 prompt 显式禁止编造未提及的工艺/材料/具体细节。
     """
-    quote_text = format_quote_for_chat(quote)
+    quote_text = format_quote_for_chat(quote, tier=tier)  # type: ignore[arg-type]
     bl_zh = BL_ZH.get(business_line, "装修")
 
-    # WHY 参考案例放在严格规则之后、quote_block 之前:
-    #     - 让 L2 在生成开场白和导购话术时"看到"过历史案例(增加专业感)
-    #     - 但严格规则必须先压住"不要复述新数字",防止案例里的金额泄漏到回复
     examples_block = ""
     if examples:
         examples_text = format_examples_for_prompt(examples)
         examples_block = (
-            "\n【历史案例参考(仅供导购话术参考,严禁复述其中任何金额)】\n"
+            "\n【历史案例参考(仅作业内素材,严禁复述其中任何金额/具体规格/工艺细节)】\n"
             f"{examples_text}\n"
         )
 
     return (
         f"你是河南郑州美恺装饰公司的 AI 客服,核心业务是{bl_zh}。"
-        f"系统已经基于历史数据为客户算好了下面这份参考报价,你的任务是用亲切、专业的口吻呈现给客户。\n\n"
+        f"系统已经基于历史数据为客户算好了下面这份参考报价,你的任务是用亲切、专业、像真人的口吻呈现给客户。\n\n"
         "【严格规则】\n"
-        "1. <quote_block> 内部的文字必须一字不改原样输出(数字、档位金额、空间分项、免责声明都不可改)\n"
-        "2. 可以在 <quote_block> 之前加 1 句开场白(15 字内,总结业态 + 面积)\n"
-        "3. 可以在 <quote_block> 之后加 1-2 句导购话术(引导留资或上门量房,不要再造任何数字)\n"
+        "1. <quote_block> 内部的文字必须一字不改原样输出(数字、档位、空间分项、免责声明都不可改)\n"
+        "2. 可以在 <quote_block> 之前加 1 句开场白(15 字内,总结业态 + 面积 + 档次)\n"
+        "3. 可以在 <quote_block> 之后加 1 句导购话术,引导用户:'若需更精准方案,可留下联系方式我们的设计师与您细聊'\n"
         "4. 全文不要使用 markdown 围栏,直接以普通文本输出\n"
-        "5. 若【历史案例参考】非空,可在导购话术中提及类目/工艺(如'我们之前也做过类似的XX项目'),但严禁复述案例里的任何金额或具体规格数字\n"
+        "5. ⚠️ **严禁编造用户未提及的细节**:不要说'您关注的XX工艺/材料/品牌',因为用户从未提过具体工艺细节\n"
+        "6. ⚠️ **严禁复述历史案例的任何具体内容**(金额、规格、品牌、面积、工期),案例仅供你心里参考\n"
+        "7. 导购话术 ≤ 1 句(原本可以 1-2 句,缩到 1 句让回复更精炼)\n"
+        "8. 全文最多 1 个 emoji(开场白前或导购末尾),严禁堆砌;<quote_block> 内部不许加 emoji\n"
         f"{examples_block}\n"
         "<quote_block>\n"
         f"{quote_text}\n"
@@ -150,28 +151,75 @@ def _build_chat_prompt(
     user_msg: str,
     business_line: BusinessLine,
     slots: dict[str, Any],
+    line_confident: bool = True,
 ) -> str:
-    """引导分支 prompt — 把已抽到的部分槽位告知 L2,避免重复追问。"""
+    """引导分支 prompt — 按"业态 → 面积 → 档次"顺序追问,绝不假设。
+
+    WHY 严格按优先级单字段追问(2026-06-23 用户反馈):
+        之前 prompt 把所有缺失字段一次性问出来,L2 容易合并发问甚至自行假设业态
+        (用户没说"餐饮",AI 直接说"餐饮店铺 120 平") → 用户大怒"我什么时候说餐饮了"。
+        改成 missing 列表只塞**第一个**缺失项,L2 只能问那一个,得到后再下一个。
+        档次也从 quote 阶段提到 chat 阶段:不收齐 tier 不出报价,避免一口气列三档。
+    """
     bl_zh = BL_ZH.get(business_line, "装修")
-    required = "、".join(REQUIRED_SLOTS.get(business_line, ()))
 
     known_lines = []
     if slots.get("business_type"):
         known_lines.append(f"- 业态细分:{slots['business_type']}")
     if slots.get("area_sqm"):
         known_lines.append(f"- 面积:{slots['area_sqm']:g} ㎡")
-    if slots.get("is_quote_intent"):
-        known_lines.append("- 用户带有报价意图")
+    if slots.get("tier"):
+        tier_zh = {"basic": "基础档", "mid": "中端档", "premium": "高端档"}.get(slots["tier"], slots["tier"])
+        known_lines.append(f"- 档次:{tier_zh}")
     known_block = "\n".join(known_lines) if known_lines else "(暂无)"
 
+    # 严格优先级 — 每次只追问一个缺失项,避免合并发问 + 防 L2 自行假设
+    # Sprint A:business_line_confident=False 时(router 兜底,用户没明说),
+    # 优先级 0:先问业务线;之后才是 业态 → 面积 → 档次
+    next_question = ""
+    if not line_confident:
+        next_question = (
+            "⚠️ 用户尚未告诉我们想装修哪类空间。请友好询问:\n"
+            "'您是想了解哪类装修呢?我们主要做三块:\n"
+            "  · 店铺装修(餐饮、零售、美容等门面)\n"
+            "  · 商务办公(写字楼、企业办公)\n"
+            "  · 精品家装(自住、新房、二手翻新)'\n"
+            "⚠️ 绝不允许自己假设(例如不要直接说'您的店铺')"
+        )
+    elif business_line == "storefront" and not slots.get("business_type"):
+        next_question = (
+            "请追问业态:'请问您想装修的是什么类型的店铺?例如餐饮、零售、美容、教育培训等?'\n"
+            "⚠️ 绝不允许自己假设业态(例如不要说'您的餐饮店')"
+        )
+    elif not slots.get("area_sqm"):
+        next_question = "请追问店铺/房屋的面积(平方米)。"
+    elif not slots.get("tier"):
+        next_question = (
+            "请追问档次:'您想看哪个档次的预算参考?\n"
+            "- 基础档:满足基本功能,经济实惠\n"
+            "- 中端档:兼顾品质与预算,大多数客户选择\n"
+            "- 高端档:用料工艺升级,体验更佳'"
+        )
+    else:
+        next_question = (
+            "⚠️ 信息已齐!**只**说一句简短过渡话术(≤15 字),"
+            "如'好的,这就为您整理报价~' 或 '稍等,这就出方案~'。"
+            "**严禁追问任何其他问题**(包括设计感/耐用性/品牌偏好等),"
+            "**严禁重复用户已说过的信息**。"
+        )
+
     return (
-        f"你是河南郑州美恺装饰公司的 AI 客服,本轮对话方向是{bl_zh}。"
-        "用专业、简洁、亲切的中文回答,控制在 2-4 句话以内。\n\n"
+        f"你是河南郑州美恺装饰公司的 AI 客服,本轮对话方向是{bl_zh}。\n"
+        "用专业、温暖、口语化的中文回答,像真人在线服务,**只回复 1-2 句话**,不要长篇大论。\n\n"
         f"【已知信息】\n{known_block}\n\n"
-        f"【报价所需槽位】{required}\n\n"
-        "如果用户在问报价,请只追问缺失的关键槽位(面积是必填),已知的不要重复问;"
-        "如果用户没问报价(打招呼/咨询服务范围/其他),正常回答即可。"
-        "不要凭空编造价格数字。\n\n"
+        f"【本轮任务】{next_question}\n\n"
+        "【严格规则】\n"
+        "1. ⚠️ 已经出现在【已知信息】里的字段,**绝对禁止**再向用户问一遍\n"
+        "2. ⚠️ 严禁假设/猜测用户未明确说过的内容(业态、品牌偏好、装修目的等都不许猜)\n"
+        "3. 本轮只追问【本轮任务】里指定的字段,不要合并发问\n"
+        "4. 不要凭空编造价格数字\n"
+        "5. 如果用户在打招呼/咨询服务范围/闲聊,正常回应 1 句,再按【本轮任务】追问\n"
+        "6. 全文最多 1 个 emoji(😊 👌 📐 🏠 ✨),严禁堆砌\n\n"
         f"用户消息:{user_msg}\n"
         "回复:"
     )
@@ -197,9 +245,21 @@ def _make_node(business_line: BusinessLine) -> Callable[[ChatState], Coroutine]:
         new_slots = await extract_slots(user_msg, business_line)
         slots = _merge_slots(state.get("slots"), new_slots)
 
-        # 2. 报价分支判定 — 必须 area_sqm 齐才能调工具;business_type 缺失会走 by_line 兜底
+        # 2. 报价分支判定 — area_sqm 齐就走;business_type 缺失会走 by_line 兜底
+        # WHY 去掉 is_quote_intent gate(2026-06-22):实测 Doubao Lite L0 在"装个 85 平沙拉店"
+        #     这种长尾消息上常判 is_quote_intent=False(理解成"咨询"而非"求价"),再被
+        #     _merge_slots 的"False 不被升级"语义卡死 → 后续即便用户说"中端吧""那预算多少"
+        #     也永远卡在 chat 分支重复追问已知槽位。业务上"用户报了面积" 本身就是强报价信号,
+        #     远比 LLM 判 intent 可靠;intent 字段仍保留用于其他启发(如 chat 分支语气)
+        # WHY area + tier 都齐才出报价(2026-06-23 用户反馈):
+        # 之前 area 齐就出,L2 被迫一口气列 basic/mid/premium 三档,用户感觉信息超载;
+        # 现在 chat 分支会先追问 tier,收齐后才进 quote 分支,只出选中档
+        # storefront 还要 business_type 齐(避免 AI 用'未确认业态'蒙猜)
         quote_payload: QuoteResult | None = None
-        if slots.get("is_quote_intent") and slots.get("area_sqm"):
+        # 业务线未确认时绝不出报价(防止 unknown 兜底被路由到 storefront 误出店铺报价)
+        line_confident = bool(state.get("business_line_confident", True))
+        bt_ready = business_line != "storefront" or bool(slots.get("business_type"))
+        if line_confident and slots.get("area_sqm") and slots.get("tier") and bt_ready:
             try:
                 quote_payload = QUOTE_FN[business_line](
                     area_sqm=float(slots["area_sqm"]),
@@ -233,11 +293,13 @@ def _make_node(business_line: BusinessLine) -> Callable[[ChatState], Coroutine]:
 
         if quote_payload is not None:
             prompt = _build_quote_prompt(
-                quote_payload, user_msg, business_line, rag_examples,
+                quote_payload, user_msg, business_line,
+                tier=slots.get("tier"),
+                examples=rag_examples,
             )
             branch = "quote"
         else:
-            prompt = _build_chat_prompt(user_msg, business_line, slots)
+            prompt = _build_chat_prompt(user_msg, business_line, slots, line_confident=line_confident)
             branch = "chat"
 
         # 3. L2 流式 — token 通过 writer 推 SSE,聚合一份用于 Guardrail + final_text 快照

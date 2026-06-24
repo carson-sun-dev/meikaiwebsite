@@ -10,9 +10,22 @@
       name="description"
       content="河南美恺装饰官方网站，郑州及河南全省店装、写字楼办公、精品家装。郑州店装公司、办公室装修设计、家装全包价格与美恺装饰联系方式。"
     />
+    <!-- og:image 静态兜底:微信/QQ 等爬虫不执行 JS,@unhead 注入的 og:image 抓不到,这里必须给个静态。 -->
+    <meta property="og:image" content="https://www.meikaizs.com/og-image.webp" />
+    <meta property="og:image:alt" content="河南美恺装饰" />
+    <meta property="og:site_name" content="河南美恺装饰" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_CN" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600&family=Inter:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- LCP 优化:浏览器解析 HTML 时就并行下载首图,比等 Vue 渲染到 <img>/background 才请求快 200-500ms。
+         imagesrcset+imagesizes 让浏览器按设备视口挑合适尺寸,移动端不会浪费带宽下 PC 图。
+         注:固定文件名(public/hero-lcp-*.webp)是 store1.webp 的副本,如果 hero 首图替换需同步更新。 -->
+    <link rel="preload" as="image"
+      imagesrcset="/hero-lcp-mobile.webp 1080w, /hero-lcp-tablet.webp 1536w, /hero-lcp-pc.webp 2560w"
+      imagesizes="100vw"
+      fetchpriority="high">
     <title>河南美恺装饰-官方网站</title>
   </head>
   <body>

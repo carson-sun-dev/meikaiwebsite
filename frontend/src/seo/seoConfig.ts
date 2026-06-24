@@ -4,6 +4,14 @@
  */
 export const SITE_ORIGIN = (import.meta.env.VITE_SITE_ORIGIN as string | undefined)?.replace(/\/$/, '') ?? ''
 
+// og:image 用公司带字 logo,固定文件名(public/og-image.webp 是 source/logo/total_logo.webp 的副本)
+// 注:微信/QQ 卡片用 og:image,Twitter 用 twitter:image;此处保留绝对路径,
+// 客户端 SSR 渲染时若 SITE_ORIGIN 为空则降级为相对路径,微信抓取大概率失败,因此必须保证 .env 里 VITE_SITE_ORIGIN 填齐。
+export const OG_IMAGE_PATH = '/og-image.webp'
+export function ogImageUrl(): string {
+  return SITE_ORIGIN ? `${SITE_ORIGIN}${OG_IMAGE_PATH}` : OG_IMAGE_PATH
+}
+
 export type PageSeo = {
   title: string
   description: string
@@ -88,11 +96,15 @@ export function canonicalUrl(path: string): string | undefined {
   return `${SITE_ORIGIN}${p.startsWith('/') ? p : `/${p}`}`
 }
 
-/** Organization JSON-LD（部署后配置 VITE_SITE_ORIGIN 则写入 url） */
+/** Organization JSON-LD(部署后配置 VITE_SITE_ORIGIN 则写入 url / logo / sameAs)
+ *
+ * 增加 ContactPoint:把电话单独结构化,Google Knowledge Panel 直接抓取展示;
+ * 增加 LocalBusiness 兼容(@type 数组),给百度本地化搜索一个明确锚定 — 比单 Organization 抓取率高。
+ */
 export function organizationJsonLd(): Record<string, unknown> {
   const base: Record<string, unknown> = {
     '@context': 'https://schema.org',
-    '@type': 'Organization',
+    '@type': ['Organization', 'LocalBusiness'],
     name: '河南美恺装饰',
     alternateName: '美恺装饰',
     description: '河南美恺装饰官方网站，提供郑州及全省店装、商务办公、精品家装设计与施工服务。',
@@ -104,9 +116,20 @@ export function organizationJsonLd(): Record<string, unknown> {
       addressCountry: 'CN',
     },
     telephone: '+86-13393736352',
+    contactPoint: [
+      {
+        '@type': 'ContactPoint',
+        telephone: '+86-13393736352',
+        contactType: 'customer service',
+        areaServed: 'CN',
+        availableLanguage: ['zh-Hans'],
+      },
+    ],
   }
   if (SITE_ORIGIN) {
     base.url = SITE_ORIGIN
+    base.logo = `${SITE_ORIGIN}${OG_IMAGE_PATH}`
+    base.image = `${SITE_ORIGIN}${OG_IMAGE_PATH}`
   }
   return base
 }

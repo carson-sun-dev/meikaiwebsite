@@ -33,11 +33,8 @@ const router = createRouter({
       name: 'residential',
       component: () => import('@/views/Residential.vue'),
     },
-    {
-      path: '/contact',
-      name: 'contact',
-      component: () => import('@/views/Contact.vue'),
-    },
+    // /contact 路由已废除(2026-06-22):所有 CTA 改为开 AI 客服 ChatPanel,
+    // Contact.vue 文件保留在 views/ 不删,以便未来需要时恢复。
     {
       path: '/about',
       name: 'about',

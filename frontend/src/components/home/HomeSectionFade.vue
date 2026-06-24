@@ -81,26 +81,13 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.home-section-fade {
-  opacity: 0;
-  transform: translateY(2rem);
-  transition:
-    opacity 1s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 1s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: opacity, transform;
-}
-
+/* 用户反馈"滚轮吸附"持续存在 — 直接取消整个淡入逻辑,变成纯包装(2026-06-22)
+ * 保留组件外壳便于将来恢复动画,但视觉上节区即来即显,滚动 100% 流畅。 */
+.home-section-fade,
 .home-section-fade--visible {
   opacity: 1;
-  transform: translateY(0);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .home-section-fade {
-    opacity: 1;
-    transform: none;
-    transition: none;
-    will-change: auto;
-  }
+  transform: none;
+  transition: none;
+  will-change: auto;
 }
 </style>

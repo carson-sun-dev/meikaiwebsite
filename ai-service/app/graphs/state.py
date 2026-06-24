@@ -26,6 +26,10 @@ class ChatState(TypedDict, total=False):
 
     # Router 输出 — 业态分流字段
     business_line: BusinessLine
+    # Sprint A:business_line 是否"真识别"还是"兜底猜":
+    # - True:LLM/正则确认了业务线 → chat 可以直接进 line-specific 流程
+    # - False:用户消息无业务线信号,router 兜底了 → chat 应先问业务线再深入
+    business_line_confident: bool
 
     # 业务槽位(SubGraph 内 extract_slots 节点填充:is_quote_intent / area_sqm / business_type;
     #         Sprint 2 step 6 multi-turn 接入后将跨轮复用,避免重复追问)
