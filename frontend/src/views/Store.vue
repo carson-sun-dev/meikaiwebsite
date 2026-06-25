@@ -183,7 +183,7 @@ const cases = [
   { title: '福状元 · 洛阳分店', imageA: fzyLuoyang1, imageB: fzyLuoyang2, industry: '餐饮', area: '约 240㎡', duration: '工期 46 天', desc: '洛阳分店空间与总部形象统一,门头识别与室内主材选型可控,保障异地复制效率。' },
   { title: '杨掌柜辣椒炒肉 · 太康二路店', imageA: yangzhanggui1, imageB: yangzhanggui2, industry: '中式正餐', area: '约 150㎡', duration: '工期 40 天', desc: '太康二路热炒门店重油烟与明厨展示并重,排风与灯光配合菜品呈现,提升就餐区舒适度。' },
   { title: '福状元 · 平顶山分店', imageA: fzyPingdingshan1, imageB: fzyPingdingshan2, industry: '餐饮', area: '约 230㎡', duration: '工期 44 天', desc: '平顶山门店从门头到就餐区一体化交付,材质与工艺与品牌手册对齐,便于后期运维。' },
-  { title: '河南财经政法大学 · 食堂改造', imageA: caida1, imageB: caida2, industry: '大众食堂', area: '约 900㎡', duration: '工期 72 天', desc: '高校食堂档口与就餐大厅分区明确,人流线与取餐动线优化,满足集中就餐高峰。' },
+  { title: '河南财经政法大学 · 食堂改造', imageA: caida1, imageB: caida2, industry: '大众食堂', area: '约 900㎡', duration: '工期 40 天', desc: '高校食堂档口与就餐大厅分区明确,人流线与取餐动线优化,满足集中就餐高峰。' },
   { title: '福状元 · 英协路店', imageA: fzyYingxie1, imageB: fzyYingxie2, industry: '餐饮', area: '约 210㎡', duration: '工期 40 天', desc: '郑州英协路临街店招与室内统一设计语言,前场展示与后场备餐分区合理,保障出餐效率。' },
   { title: '精品茶舍空间', imageA: tea1, imageB: tea2, industry: '茶空间', area: '约 170㎡', duration: '工期 35 天', desc: '茶舍静谧氛围与展陈结合,照明与材质突出茶品陈列,兼顾品茗与社交场景。' },
   { title: '福状元 · 索凌路店', imageA: fzySuoling1, imageB: fzySuoling2, industry: '餐饮', area: '约 225㎡', duration: '工期 43 天', desc: '郑州索凌路门店从门头到室内完整落地,桌椅与灯光匹配品牌调性,交付即可开业。' },

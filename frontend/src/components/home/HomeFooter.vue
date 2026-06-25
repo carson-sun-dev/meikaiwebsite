@@ -308,15 +308,37 @@ async function onSubmitPhone() {
   flex: 1;
   border: none;
   background: transparent;
-  font-size: 0.875rem;
+  /* 与 placeholder 统一为 18px,避免"提示大输入小"的视觉跳变 */
+  font-size: 18px;
+  /* 与 placeholder 一样居中 + 适度左右内边距,防止首末字符贴边被裁 */
+  text-align: center;
+  padding: 0 0.75rem;
+  letter-spacing: 0.02em;
   color: #fff;
   outline: none;
+  /* 与外层 email-row 行高匹配,保持垂直居中视觉一致 */
+  line-height: 1.4;
 }
 
 .home-footer__email-input::placeholder {
   font-size: 18px;
   color: rgba(255, 255, 255, 0.4);
   text-align: center;
+}
+
+/* Chrome / Safari autofill 默认强制白底黑字会破坏深色 footer 视觉 ——
+   用 inset box-shadow + text-fill-color 覆盖。
+   inset 颜色取 #1c1c1c = rgb(28,28,28):这是 footer 主背 #0e0e0e(rgb 14)
+   与 email-row 自身 rgba(255,255,255,0.06) 实际混色后的胶囊内视觉色,
+   autofill 状态下 input 背景与外层胶囊肉眼无缝。 */
+.home-footer__email-input:-webkit-autofill,
+.home-footer__email-input:-webkit-autofill:hover,
+.home-footer__email-input:-webkit-autofill:focus,
+.home-footer__email-input:-webkit-autofill:active {
+  -webkit-text-fill-color: #fff !important;
+  -webkit-box-shadow: 0 0 0 1000px #1c1c1c inset !important;
+  caret-color: #fff !important;
+  transition: background-color 600s ease-in-out 0s;
 }
 
 .home-footer__email-submit {

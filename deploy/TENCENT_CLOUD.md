@@ -1,7 +1,5 @@
 # 腾讯云 CVM 部署说明（域名 www.meikaizs.com · 2 核 2G）
 
-本文假设：已购买 **腾讯云轻量应用服务器或 CVM**（2C2G）、域名 **meikaizs.com** 已备案（如需 ICP），且 DNS 可在腾讯云解析中管理。
-
 ## 1. 架构说明
 
 | 组件 | 说明 |
@@ -15,7 +13,7 @@
 
 ## 2. 服务器准备
 
-1. **系统**：推荐 Ubuntu 22.04 LTS 或 Debian 12。
+1. **系统**：推荐 Ubuntu 22.04 LTS 。
 2. **安全组 / 防火墙**：放行入站 **TCP 80、443**（SSH 22 仅对你本机 IP 开放更安全）。
 3. **内存**：2G 较紧，建议加 **1–2G Swap**（腾讯云控制台或 `fallocate` + `mkswap`）。
 4. **安装 Docker**（官方文档一键安装即可），并启用 `docker compose`（Docker Compose V2）。
